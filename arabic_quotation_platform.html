@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة الفواتير الاحترافية - نظام إدارة عروض الأسعار والفواتير</title>
+    
+    <!-- External Dependencies -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* إعدادات CSS للغة العربية */
+        :root {
+            --primary-color: #1e40af;
+            --primary-hover: #1e3a8a;
+            --secondary-color: #0891b2;
+            --success-color: #059669;
+            --danger-color: #dc2626;
+            --warning-color: #d97706;
+            --info-color: #0284c7;
+            --dark-bg: #0f172a;
+            --light-bg: #f8fafc;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --sidebar-width: 280px;
+            --header-height: 70px;
+            --border-radius: 12px;
+        }
+
+        /* الوضع الداكن */
+        [data-theme="dark"] {
+            --light-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #334155;
+            --dark-bg: #020617;
+        }
+
+        /* إعدادات عامة */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--light-bg);
+            color: var(--text-primary);
+            line-height: 1.8;
+            overflow-x: hidden;
+            direction: rtl;
+        }
+
+        /* شاشة تسجيل الدخول */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* أشكال الخلفية */
+        .bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .bg-shape-1 {
+            width: 400px;
+            height: 400px;
+            background: white;
+            top: -200px;
+            right: -200px;
+        }
+
+        .bg-shape-2 {
+            width: 300px;
+            height: 300px;
+            background: white;
+            bottom: -150px;
+            left: -150px;
+            animation-delay: 5s;
+        }
+
+        .bg-shape-3 {
+            width: 250px;
+            height: 250px;
+            background: white;
+            top: 50%;
+            left: 10%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            33% { transform: translateY(-30px) rotate(120deg); }
+            66% { transform: translateY(30px) rotate(240deg); }
+        }
+
+        .auth-box {
+            background: white;
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 500px;
+            padding: 48px;
+            animation: slideUp 0.4s ease-out;
+            position: relative;
+            z-index: 10;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .auth-logo .logo-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .auth-logo .logo-icon i {
+            font-size: 36px;
+            color: white;
+        }
+
+        .auth-logo h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .auth-logo p {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* نموذج الإدخال */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-label .required {
+            color: var(--danger-color);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 15px;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s;
+            background: var(--light-bg);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-input.error {
+            border-color: var(--danger-color);
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            font-size: 13px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .input-icon {
+            position: relative;
+        }
+
+        .input-icon i {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .input-icon .form-input {
+            padding-right: 48px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary-color);
+        }
+
+        /* الأزرار */
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            font-family: 'Cairo', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(30, 64, 175, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(30, 64, 175, 0.5);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .btn-social {
+            background: white;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-social:hover {
+            border-color: var(--primary-color);
+            background: var(--light-bg);
+        }
+
+        .btn-google {
+            color: #ea4335;
+        }
+
+        .btn-microsoft {
+            color: #00bcf2;
+        }
+
+        /* خيارات إضافية */
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .checkbox-wrapper label {
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .forgot-link {
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .forgot-link:hover {
+            color: var(--primary-hover);
+            text-decoration: underline;
+        }
+
+        /* الفاصل */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .divider span {
+            padding: 0 16px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* لوحة التحكم */
+        .dashboard-container {
+            display: none;
+            min-height: 100vh;
+            background: var(--light-bg);
+        }
+
+        .dashboard-container.active {
+            display: flex;
+        }
+
+        /* الشريط الجانبي */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            right: 0;
+            top: 0;
+            z-index: 1000;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(100%);
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .sidebar-brand .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-brand i {
+            font-size: 24px;
+        }
+
+        .sidebar-brand .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-brand .brand-name {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .sidebar-brand .brand-slogan {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* قائمة التنقل */
+        .nav-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .nav-label {
+            padding: 8px 24px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            margin: 2px 12px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+            font-weight: 500;
+            font-size: 15px;
+            position: relative;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 0;
+            background: var(--primary-color);
+            border-radius: 0 4px 4px 0;
+            transition: height 0.3s;
+        }
+
+        .nav-link:hover {
+            background: var(--light-bg);
+            color: var(--text-primary);
+            padding-right: 24px;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(90deg, rgba(30, 64, 175, 0.1), transparent);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .nav-link.active::before {
+            height: 24px;
+        }
+
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-badge {
+            margin-right: auto;
+            background: var(--danger-color);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        /* المحتوى الرئيسي */
+        .main-content {
+            flex: 1;
+            margin-right: var(--sidebar-width);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* الهيدر */
+        .header {
+            height: var(--header-height);
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .menu-toggle:hover {
+            background: var(--light-bg);
+        }
+
+        .search-box {
+            position: relative;
+            width: 450px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 18px 10px 44px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .header-btn:hover {
+            background: var(--light-bg);
+            color: var(--primary-color);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background: var(--danger-color);
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.5; }
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 8px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .user-menu:hover {
+            background: var(--light-bg);
+            border-color: var(--border-color);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* محتوى الصفحة */
+        .page-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        /* ترحيب */
+        .welcome-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .welcome-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+
+        /* بطاقات الإحصائيات */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            opacity: 0.05;
+            border-radius: 50%;
+            transform: translate(30px, -30px);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+
+        .stat-icon.primary {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(8, 145, 178, 0.1));
+            color: var(--primary-color);
+        }
+
+        .stat-icon.success {
+            background: linear-gradient(135deg, rgba(5, 150, 105, 0.1), rgba(16, 185, 129, 0.1));
+            color: var(--success-color);
+        }
+
+        .stat-icon.warning {
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.1), rgba(245, 158, 11, 0.1));
+            color: var(--warning-color);
+        }
+
+        .stat-icon.info {
+            background: linear-gradient(135deg, rgba(2, 132, 199, 0.1), rgba(14, 165, 233, 0.1));
+            color: var(--info-color);
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .stat-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .stat-change.positive {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success-color);
+        }
+
+        .stat-change.negative {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger-color);
+        }
+
+        .stat-change i {
+            font-size: 12px;
+        }
+
+        /* الإجراءات السريعة */
+        .quick-actions {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title i {
+            font-size: 20px;
+            color: var(--primary-color);
+        }
+
+        .view-all-btn {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: gap 0.2s;
+        }
+
+        .view-all-btn:hover {
+            gap: 10px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 18px;
+        }
+
+        .action-card {
+            background: var(--light-bg);
+            border: 2px solid transparent;
+            border-radius: 14px;
+            padding: 24px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            transform: translateX(100%);
+            transition: transform 0.3s;
+        }
+
+        .action-card:hover {
+            border-color: var(--primary-color);
+            background: white;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(30, 64, 175, 0.15);
+        }
+
+        .action-card:hover::before {
+            transform: translateX(0);
+        }
+
+        .action-card i {
+            font-size: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 14px;
+        }
+
+        .action-card h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .action-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* جدول المستندات الأخيرة */
+        .documents-table {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: -8px;
+            padding: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th {
+            text-align: right;
+            padding: 14px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            background: var(--light-bg);
+            border-bottom: 2px solid var(--border-color);
+            letter-spacing: 0.5px;
+        }
+
+        th:first-child {
+            border-radius: 12px 0 0 0;
+        }
+
+        th:last-child {
+            border-radius: 0 12px 0 0;
+        }
+
+        td {
+            padding: 18px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr {
+            transition: background 0.2s;
+        }
+
+        tr:hover {
+            background: var(--light-bg);
+        }
+
+        .doc-number {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .doc-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .doc-type.quotation {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(8, 145, 178, 0.1));
+            color: var(--primary-color);
+        }
+
+        .doc-type.invoice {
+            background: linear-gradient(135deg, rgba(5, 150, 105, 0.1), rgba(16, 185, 129, 0.1));
+            color: var(--success-color);
+        }
+
+        .doc-type.proposal {
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.1), rgba(245, 158, 11, 0.1));
+            color: var(--warning-color);
+        }
+
+        .doc-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .doc-status.draft {
+            background: rgba(100, 116, 139, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .doc-status.sent {
+            background: rgba(2, 132, 199, 0.1);
+            color: var(--info-color);
+        }
+
+        .doc-status.approved {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success-color);
+        }
+
+        .doc-status.rejected {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger-color);
+        }
+
+        .doc-status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .table-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+
+        .table-btn:hover {
+            background: var(--light-bg);
+            color: var(--primary-color);
+        }
+
+        /* التوافق مع الجوال */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                z-index: 9999;
+                box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+            }
+
+            .main-content {
+                margin-right: 0;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .search-box {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .user-info {
+                display: none;
+            }
+
+            .table-container {
+                overflow-x: scroll;
+            }
+
+            .welcome-title {
+                font-size: 22px;
+            }
+
+            .welcome-subtitle {
+                font-size: 14px;
+            }
+
+            .page-content {
+                padding: 20px;
+            }
+        }
+
+        /* شاشة التحميل */
+        .spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 40px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Overlay للقائمة الجانبية في الجوال */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 998;
+            backdrop-filter: blur(4px);
+        }
+
+        .overlay.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* تخصيص شريط التمرير */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-secondary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- شاشة تسجيل الدخول -->
+    <div class="auth-container" id="authScreen">
+        <!-- أشكال الخلفية -->
+        <div class="bg-shape bg-shape-1"></div>
+        <div class="bg-shape bg-shape-2"></div>
+        <div class="bg-shape bg-shape-3"></div>
+
+        <div class="auth-box">
+            <div class="auth-logo">
+                <div class="logo-icon">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <h1>منصة الفواتير</h1>
+                <p>نظام إدارة عروض الأسعار والفواتير الاحترافي</p>
+            </div>
+
+            <!-- نموذج تسجيل الدخول -->
+            <div id="loginForm">
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label">البريد الإلكتروني <span class="required">*</span></label>
+                        <div class="input-icon">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" class="form-input" placeholder="example@company.com" required id="loginEmail">
+                            <div class="error-message">الرجاء إدخال بريد إلكتروني صحيح</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">كلمة المرور <span class="required">*</span></label>
+                        <div class="input-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" class="form-input" placeholder="أدخل كلمة المرور" required id="loginPassword">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('loginPassword')"></i>
+                            <div class="error-message">كلمة المرور مطلوبة</div>
+                        </div>
+                    </div>
+
+                    <div class="form-options">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" id="remember">
+                            <label for="remember">تذكرني</label>
+                        </div>
+                        <a href="#" class="forgot-link">نسيت كلمة المرور؟</a>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <i class="fas fa-sign-in-alt"></i>
+                        تسجيل الدخول
+                    </button>
+                </form>
+
+                <div style="text-align: center; margin-top: 24px;">
+                    <p style="font-size: 14px; color: var(--text-secondary);">
+                        ليس لديك حساب؟ 
+                        <a href="#" onclick="showRegister()" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">سجل الآن</a>
+                    </p>
+                </div>
+
+                <div class="divider">
+                    <span>أو</span>
+                </div>
+
+                <button class="btn btn-social btn-full btn-google" style="margin-bottom: 12px;">
+                    <i class="fab fa-google"></i>
+                    تسجيل الدخول بحساب جوجل
+                </button>
+
+                <button class="btn btn-social btn-full btn-microsoft">
+                    <i class="fab fa-microsoft"></i>
+                    تسجيل الدخول بحساب مايكروسوفت
+                </button>
+            </div>
+
+            <!-- نموذج التسجيل (مخفي افتراضياً) -->
+            <div id="registerForm" style="display: none;">
+                <form onsubmit="handleRegister(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">الاسم الأول <span class="required">*</span></label>
+                            <input type="text" class="form-input" placeholder="أحمد" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">الاسم الأخير <span class="required">*</span></label>
+                            <input type="text" class="form-input" placeholder="محمد" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">البريد الإلكتروني <span class="required">*</span></label>
+                        <div class="input-icon">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" class="form-input" placeholder="example@company.com" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">اسم الشركة <span class="required">*</span></label>
+                        <div class="input-icon">
+                            <i class="fas fa-building"></i>
+                            <input type="text" class="form-input" placeholder="شركة البناء والتعمير" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">كلمة المرور <span class="required">*</span></label>
+                        <div class="input-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" class="form-input" placeholder="أنشئ كلمة مرور قوية" required id="registerPassword">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('registerPassword')"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">تأكيد كلمة المرور <span class="required">*</span></label>
+                        <div class="input-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" class="form-input" placeholder="أعد إدخال كلمة المرور" required id="confirmPassword">
+                            <i class="fas fa-eye password-toggle" onclick="togglePassword('confirmPassword')"></i>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-wrapper" style="margin-bottom: 24px;">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms">أوافق على <a href="#" style="color: var(--primary-color);">الشروط والأحكام</a> و <a href="#" style="color: var(--primary-color);">سياسة الخصوصية</a></label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <i class="fas fa-user-plus"></i>
+                        إنشاء حساب جديد
+                    </button>
+                </form>
+
+                <div style="text-align: center; margin-top: 24px;">
+                    <p style="font-size: 14px; color: var(--text-secondary);">
+                        لديك حساب بالفعل؟ 
+                        <a href="#" onclick="showLogin()" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">تسجيل الدخول</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم -->
+    <div class="dashboard-container" id="dashboardScreen">
+        <!-- الشريط الجانبي -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="sidebar-brand">
+                    <div class="brand-icon">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-name">منصة الفواتير</span>
+                        <span class="brand-slogan">نظام متكامل للأعمال</span>
+                    </div>
+                </a>
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-section">
+                    <div class="nav-label">الرئيسية</div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link active" onclick="showDashboard()">
+                            <i class="fas fa-home"></i>
+                            <span>لوحة التحكم</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="showTemplates()">
+                            <i class="fas fa-layer-group"></i>
+                            <span>القوالب</span>
+                            <span class="nav-badge">جديد</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="showDocuments()">
+                            <i class="fas fa-folder"></i>
+                            <span>المستندات</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="showClients()">
+                            <i class="fas fa-users"></i>
+                            <span>العملاء</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-label">إنشاء جديد</div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="createQuotation()">
+                            <i class="fas fa-file-alt"></i>
+                            <span>عرض سعر جديد</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="createInvoice()">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>فاتورة جديدة</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="createProposal()">
+                            <i class="fas fa-file-contract"></i>
+                            <span>مقترح جديد</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-label">الإعدادات</div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="showCompanySettings()">
+                            <i class="fas fa-building"></i>
+                            <span>إعدادات الشركة</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="showBranding()">
+                            <i class="fas fa-palette"></i>
+                            <span>الهوية البصرية</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="showProfile()">
+                            <i class="fas fa-user"></i>
+                            <span>الملف الشخصي</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="showBilling()">
+                            <i class="fas fa-credit-card"></i>
+                            <span>الفوترة والاشتراك</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="showHelp()">
+                            <i class="fas fa-question-circle"></i>
+                            <span>المساعدة والدعم</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>تسجيل الخروج</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <!-- الهيدر -->
+            <header class="header">
+                <div class="header-right">
+                    <button class="menu-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="ابحث عن المستندات، العملاء، القوالب...">
+                    </div>
+                </div>
+
+                <div class="header-left">
+                    <button class="header-btn" onclick="toggleTheme()">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                    <button class="header-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge"></span>
+                    </button>
+                    <div class="user-menu">
+                        <div class="user-avatar">أم</div>
+                        <div class="user-info">
+                            <span class="user-name">أحمد محمد</span>
+                            <span class="user-role">مدير النظام</span>
+                        </div>
+                        <i class="fas fa-chevron-down" style="color: var(--text-secondary); font-size: 12px;"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- محتوى الصفحة -->
+            <div class="page-content" id="pageContent">
+                <!-- رسالة الترحيب -->
+                <div class="welcome-section">
+                    <div class="welcome-content">
+                        <h1 class="welcome-title">مرحباً بك، أحمد! 👋</h1>
+                        <p class="welcome-subtitle">إليك نظرة عامة على نشاط أعمالك اليوم</p>
+                    </div>
+                </div>
+
+                <!-- بطاقات الإحصائيات -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-content">
+                                <div class="stat-value">42</div>
+                                <div class="stat-label">إجمالي المستندات</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>12% عن الشهر الماضي</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon primary">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-content">
+                                <div class="stat-value">284,500 ر.س</div>
+                                <div class="stat-label">إجمالي الإيرادات</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>8% عن الشهر الماضي</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon success">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-content">
+                                <div class="stat-value">18</div>
+                                <div class="stat-label">في انتظار الموافقة</div>
+                                <div class="stat-change negative">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span>3% عن الأسبوع الماضي</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-content">
+                                <div class="stat-value">87</div>
+                                <div class="stat-label">العملاء النشطون</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>5 جدد هذا الشهر</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon info">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الإجراءات السريعة -->
+                <div class="quick-actions">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-rocket"></i>
+                            الإجراءات السريعة
+                        </h2>
+                        <a href="#" class="view-all-btn">
+                            عرض الكل
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                    </div>
+                    <div class="actions-grid">
+                        <div class="action-card" onclick="createQuotation()">
+                            <i class="fas fa-file-alt"></i>
+                            <h4>عرض سعر جديد</h4>
+                            <p>إنشاء عرض سعر</p>
+                        </div>
+                        <div class="action-card" onclick="createInvoice()">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <h4>فاتورة جديدة</h4>
+                            <p>إنشاء فاتورة</p>
+                        </div>
+                        <div class="action-card" onclick="showTemplates()">
+                            <i class="fas fa-layer-group"></i>
+                            <h4>القوالب</h4>
+                            <p>تصفح القوالب</p>
+                        </div>
+                        <div class="action-card" onclick="showClients()">
+                            <i class="fas fa-user-plus"></i>
+                            <h4>إضافة عميل</h4>
+                            <p>عميل جديد</p>
+                        </div>
+                        <div class="action-card" onclick="showReports()">
+                            <i class="fas fa-chart-bar"></i>
+                            <h4>التقارير</h4>
+                            <p>عرض التحليلات</p>
+                        </div>
+                        <div class="action-card" onclick="showSettings()">
+                            <i class="fas fa-cog"></i>
+                            <h4>الإعدادات</h4>
+                            <p>ضبط التطبيق</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- جدول المستندات الأخيرة -->
+                <div class="documents-table">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-file"></i>
+                            المستندات الأخيرة
+                        </h2>
+                        <a href="#" class="view-all-btn" onclick="showDocuments()">
+                            عرض الكل
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>رقم المستند</th>
+                                    <th>العميل</th>
+                                    <th>النوع</th>
+                                    <th>المبلغ</th>
+                                    <th>الحالة</th>
+                                    <th>التاريخ</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="doc-number">QUO-2025-001</span></td>
+                                    <td>شركة البناء والتعمير</td>
+                                    <td><span class="doc-type quotation"><i class="fas fa-file-alt"></i> عرض سعر</span></td>
+                                    <td>45,000 ر.س</td>
+                                    <td><span class="doc-status draft">مسودة</span></td>
+                                    <td>15 يناير 2025</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="table-btn" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="table-btn" title="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-btn" title="تحميل">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button class="table-btn" title="المزيد">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="doc-number">INV-2025-012</span></td>
+                                    <td>مؤسسة النجاح للتجارة</td>
+                                    <td><span class="doc-type invoice"><i class="fas fa-file-invoice-dollar"></i> فاتورة</span></td>
+                                    <td>128,500 ر.س</td>
+                                    <td><span class="doc-status sent">مرسلة</span></td>
+                                    <td>14 يناير 2025</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="table-btn" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="table-btn" title="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-btn" title="تحميل">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button class="table-btn" title="المزيد">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="doc-number">QUO-2024-089</span></td>
+                                    <td>شركة الطاقة الخضراء</td>
+                                    <td><span class="doc-type quotation"><i class="fas fa-file-alt"></i> عرض سعر</span></td>
+                                    <td>67,300 ر.س</td>
+                                    <td><span class="doc-status approved">موافق عليه</span></td>
+                                    <td>13 يناير 2025</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="table-btn" title="تحويل لفاتورة">
+                                                <i class="fas fa-exchange-alt"></i>
+                                            </button>
+                                            <button class="table-btn" title="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-btn" title="تحميل">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button class="table-btn" title="المزيد">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="doc-number">PRO-2025-005</span></td>
+                                    <td>مجموعة الأعمال المتقدمة</td>
+                                    <td><span class="doc-type proposal"><i class="fas fa-file-contract"></i> مقترح</span></td>
+                                    <td>195,000 ر.س</td>
+                                    <td><span class="doc-status rejected">مرفوض</span></td>
+                                    <td>12 يناير 2025</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="table-btn" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="table-btn" title="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-btn" title="نسخ">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                            <button class="table-btn" title="المزيد">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Overlay للقائمة الجانبية في الجوال -->
+        <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    </div>
+
+    <script>
+        // إدارة الحالة
+        let currentUser = null;
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        let sidebarOpen = false;
+
+        // التهيئة
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTheme(currentTheme);
+            checkAuth();
+            initializeAnimations();
+        });
+
+        // وظائف المصادقة
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            // التحقق من صحة المدخلات
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!validateEmail(email)) {
+                showError('loginEmail', 'الرجاء إدخال بريد إلكتروني صحيح');
+                return;
+            }
+            
+            // محاكاة تسجيل الدخول
+            showLoadingButton(e.target.querySelector('button[type="submit"]'));
+            
+            setTimeout(() => {
+                currentUser = {
+                    name: 'أحمد محمد',
+                    email: email,
+                    role: 'مدير النظام'
+                };
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                showDashboardScreen();
+                showNotification('تم تسجيل الدخول بنجاح', 'success');
+            }, 1500);
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            
+            // التحقق من كلمة المرور
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showError('confirmPassword', 'كلمات المرور غير متطابقة');
+                return;
+            }
+            
+            if (password.length < 8) {
+                showError('registerPassword', 'كلمة المرور يجب أن تكون 8 أحرف على الأقل');
+                return;
+            }
+            
+            // محاكاة التسجيل
+            showLoadingButton(e.target.querySelector('button[type="submit"]'));
+            
+            setTimeout(() => {
+                showNotification('تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول', 'success');
+                showLogin();
+            }, 1500);
+        }
+
+        function logout() {
+            if (confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+                localStorage.removeItem('user');
+                currentUser = null;
+                showAuthScreen();
+                showNotification('تم تسجيل الخروج بنجاح', 'info');
+            }
+        }
+
+        function checkAuth() {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showDashboardScreen();
+            } else {
+                showAuthScreen();
+            }
+        }
+
+        // التنقل بين الشاشات
+        function showAuthScreen() {
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('dashboardScreen').classList.remove('active');
+        }
+
+        function showDashboardScreen() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('dashboardScreen').classList.add('active');
+            updateUserInfo();
+        }
+
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        }
+
+        // وظائف الشريط الجانبي
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            sidebarOpen = !sidebarOpen;
+            if (sidebarOpen) {
+                sidebar.classList.remove('collapsed');
+                overlay.classList.add('active');
+            } else {
+                sidebar.classList.add('collapsed');
+                overlay.classList.remove('active');
+            }
+        }
+
+        // وظائف السمة
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(currentTheme);
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        function applyTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+            }
+        }
+
+        // تحديث معلومات المستخدم
+        function updateUserInfo() {
+            if (currentUser) {
+                const avatarEl = document.querySelector('.user-avatar');
+                const nameEl = document.querySelector('.user-name');
+                const roleEl = document.querySelector('.user-role');
+                
+                if (avatarEl) {
+                    const initials = currentUser.name.split(' ').map(n => n[0]).join('');
+                    avatarEl.textContent = initials;
+                }
+                if (nameEl) nameEl.textContent = currentUser.name;
+                if (roleEl) roleEl.textContent = currentUser.role;
+            }
+        }
+
+        // وظائف المساعدة
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.parentElement.querySelector('.password-toggle');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash password-toggle';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye password-toggle';
+            }
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function showError(inputId, message) {
+            const input = document.getElementById(inputId);
+            const errorEl = input.parentElement.querySelector('.error-message');
+            
+            input.classList.add('error');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            
+            setTimeout(() => {
+                input.classList.remove('error');
+                errorEl.classList.remove('show');
+            }, 3000);
+        }
+
+        function showLoadingButton(button) {
+            const originalContent = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ المعالجة...';
+            
+            setTimeout(() => {
+                button.disabled = false;
+                button.innerHTML = originalContent;
+            }, 1500);
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 30px;
+                left: 30px;
+                padding: 16px 24px;
+                background: ${type === 'success' ? 'var(--success-color)' : type === 'error' ? 'var(--danger-color)' : 'var(--info-color)'};
+                color: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+                z-index: 10000;
+                animation: slideInUp 0.3s ease-out;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-weight: 500;
+            `;
+            
+            const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : 'info-circle';
+            notification.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOutDown 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function initializeAnimations() {
+            const animationStyles = `
+                @keyframes slideInUp {
+                    from {
+                        transform: translateY(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                }
+                
+                @keyframes slideOutDown {
+                    from {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                    to {
+                        transform: translateY(100%);
+                        opacity: 0;
+                    }
+                }
+            `;
+            
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = animationStyles;
+            document.head.appendChild(styleSheet);
+        }
+
+        // وظائف التنقل
+        function setActiveNav(element) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            if (element) element.classList.add('active');
+        }
+
+        // وظائف الصفحات
+        function showDashboard() {
+            console.log('عرض لوحة التحكم...');
+        }
+
+        function showTemplates() {
+            console.log('عرض القوالب...');
+        }
+
+        function showDocuments() {
+            console.log('عرض المستندات...');
+        }
+
+        function showClients() {
+            console.log('عرض العملاء...');
+        }
+
+        function createQuotation() {
+            console.log('إنشاء عرض سعر جديد...');
+        }
+
+        function createInvoice() {
+            console.log('إنشاء فاتورة جديدة...');
+        }
+
+        function createProposal() {
+            console.log('إنشاء مقترح جديد...');
+        }
+
+        function showCompanySettings() {
+            console.log('عرض إعدادات الشركة...');
+        }
+
+        function showBranding() {
+            console.log('عرض إعدادات الهوية البصرية...');
+        }
+
+        function showProfile() {
+            console.log('عرض الملف الشخصي...');
+        }
+
+        function showBilling() {
+            console.log('عرض الفوترة والاشتراك...');
+        }
+
+        function showHelp() {
+            console.log('عرض المساعدة...');
+        }
+
+        function showReports() {
+            console.log('عرض التقارير...');
+        }
+
+        function showSettings() {
+            console.log('عرض الإعدادات...');
+        }
+
+        // التعامل مع تغيير حجم الشاشة
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                document.getElementById('sidebar').classList.remove('collapsed');
+                document.getElementById('overlay').classList.remove('active');
+                sidebarOpen = false;
+            }
+        });
+
+        // اختصارات لوحة المفاتيح
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + K للبحث
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const searchBox = document.querySelector('.search-box input');
+                if (searchBox) searchBox.focus();
+            }
+            
+            // Escape لإغلاق القائمة الجانبية
+            if (e.key === 'Escape' && sidebarOpen) {
+                toggleSidebar();
+            }
+        });
+    </script>
+</body>
+</html>

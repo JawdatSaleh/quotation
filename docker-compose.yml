@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:6
+    container_name: quotepro-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: quotepro
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./database/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - quotepro-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: quotepro-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - quotepro-network
+    command: redis-server --appendonly yes
+
+  # QuotePro Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quotepro-app
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - redis
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGODB_URI: mongodb://admin:admin123@mongodb:27017/quotepro?authSource=admin
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    networks:
+      - quotepro-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: quotepro-nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./client/build:/usr/share/nginx/html:ro
+    networks:
+      - quotepro-network
+
+  # Backup Service (runs periodically)
+  backup:
+    image: mongo:6
+    container_name: quotepro-backup
+    depends_on:
+      - mongodb
+    environment:
+      MONGODB_URI: mongodb://admin:admin123@mongodb:27017
+    volumes:
+      - ./backups:/backups
+    networks:
+      - quotepro-network
+    command: >
+      sh -c "while true; do
+        mongodump --uri=$$MONGODB_URI --out=/backups/backup-$$(date +%Y%m%d-%H%M%S)
+        find /backups -type d -mtime +30 -exec rm -rf {} +
+        sleep 86400
+      done"
+
+networks:
+  quotepro-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
