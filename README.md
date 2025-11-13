@@ -155,9 +155,14 @@ npm start
 ```
 
 6. **Access the application**
-- Frontend: http://localhost:3000
-- API: http://localhost:3000/api
-- Documentation: http://localhost:3000/api-docs
+- Local frontend: http://localhost:3000
+- Local API: http://localhost:3000/api
+- Local documentation: http://localhost:3000/api-docs
+
+When you deploy the server on an internet-accessible host, set the `PUBLIC_URL`
+environment variable to your public domain (for example,
+`https://quotation.example.com`). The server log will then display the correct
+external URLs to share with your team or clients.
 
 ## 📝 API Documentation
 
@@ -228,6 +233,8 @@ Authorization: Bearer {token}
 ```env
 # Server Configuration
 PORT=3000
+HOST=0.0.0.0
+PUBLIC_URL=https://quotation.example.com
 NODE_ENV=production
 
 # Database

@@ -19,6 +19,8 @@ const app = express();
 
 // Environment Variables
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
+const PUBLIC_URL = process.env.PUBLIC_URL;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/quotepro';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRE = '7d';
@@ -31,6 +33,17 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Static Frontend
+app.use(express.static(__dirname));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'arabic_quotation_platform.html'));
+});
+
+app.get('/editor', (req, res) => {
+    res.sendFile(path.join(__dirname, 'arabic_template_editor.html'));
+});
 
 // Rate Limiting
 const limiter = rateLimit({
@@ -1190,9 +1203,13 @@ app.use((req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📝 API Documentation: http://localhost:${PORT}/api-docs`);
+app.listen(PORT, HOST, () => {
+    const baseUrl = PUBLIC_URL || `http://${HOST === '0.0.0.0' ? '0.0.0.0' : HOST}:${PORT}`;
+    console.log(`🚀 Server running at ${baseUrl}`);
+    console.log(`📝 API Documentation: ${PUBLIC_URL ? `${PUBLIC_URL}/api-docs` : `${baseUrl}/api-docs`}`);
+    if (!PUBLIC_URL && HOST === '0.0.0.0') {
+        console.log('🌐 Update PUBLIC_URL with your public domain or IP to share the app over the internet.');
+    }
 });
 
 module.exports = app;
