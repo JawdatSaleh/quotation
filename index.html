@@ -1965,8 +1965,10 @@
                 currentUser = normalizedUser;
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(normalizedUser));
-                showDashboardScreen();
-                showNotification('تم تسجيل الدخول باستخدام جوجل بنجاح', 'success');
+                const stayedOnPage = navigateToMainPage();
+                if (stayedOnPage) {
+                    showNotification('تم تسجيل الدخول باستخدام جوجل بنجاح', 'success');
+                }
             } catch (error) {
                 console.error('Google login failed:', error);
                 showNotification('حدث خطأ أثناء تسجيل الدخول بحساب جوجل', 'error');
@@ -2022,8 +2024,10 @@
                 currentUser = normalizedUser;
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(normalizedUser));
-                showDashboardScreen();
-                showNotification('تم تسجيل الدخول بنجاح', 'success');
+                const stayedOnPage = navigateToMainPage();
+                if (stayedOnPage) {
+                    showNotification('تم تسجيل الدخول بنجاح', 'success');
+                }
             } catch (error) {
                 console.error('Login error:', error);
                 showNotification('تعذر تسجيل الدخول حالياً. يرجى المحاولة مرة أخرى.', 'error');
@@ -2156,7 +2160,7 @@
                 const normalizedUser = normalizeUser(data.user);
                 currentUser = normalizedUser;
                 localStorage.setItem('user', JSON.stringify(normalizedUser));
-                showDashboardScreen();
+                navigateToMainPage();
             } catch (error) {
                 console.warn('Authentication check failed', error);
                 localStorage.removeItem('token');
@@ -2164,6 +2168,20 @@
                 currentUser = null;
                 showAuthScreen();
             }
+        }
+
+        function navigateToMainPage() {
+            const currentPath = window.location.pathname;
+            const isOnMainIndex = currentPath === '/' || currentPath === '/index.html' || currentPath.endsWith('/index.html');
+
+            if (isOnMainIndex) {
+                showDashboardScreen();
+                return true;
+            }
+
+            const targetUrl = new URL('/', window.location.origin);
+            window.location.href = targetUrl.toString();
+            return false;
         }
 
         // التنقل بين الشاشات
