@@ -38,7 +38,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'arabic_quotation_platform.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.get('/editor', (req, res) => {
