@@ -1979,8 +1979,8 @@
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
 
-            if (!validateEmail(email)) {
-                showError('loginEmail', 'الرجاء إدخال بريد إلكتروني صحيح');
+            if (!email) {
+                showError('loginEmail', 'الرجاء إدخال البريد الإلكتروني');
                 return;
             }
 
