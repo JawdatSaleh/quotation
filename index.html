@@ -338,6 +338,24 @@
             color: #00bcf2;
         }
 
+        .social-login-container {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #googleSignInButton {
+            display: flex;
+            justify-content: center;
+        }
+
+        #googleSignInButton > div {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
         /* خيارات إضافية */
         .form-options {
             display: flex;
@@ -1318,15 +1336,13 @@
                     <span>أو</span>
                 </div>
 
-                <button class="btn btn-social btn-full btn-google" style="margin-bottom: 12px;">
-                    <i class="fab fa-google"></i>
-                    تسجيل الدخول بحساب جوجل
-                </button>
-
-                <button class="btn btn-social btn-full btn-microsoft">
-                    <i class="fab fa-microsoft"></i>
-                    تسجيل الدخول بحساب مايكروسوفت
-                </button>
+                <div class="social-login-container">
+                    <div id="googleSignInButton"></div>
+                    <button type="button" class="btn btn-social btn-full btn-microsoft" disabled title="سيتوفر قريباً">
+                        <i class="fab fa-microsoft"></i>
+                        تسجيل الدخول بحساب مايكروسوفت (قريباً)
+                    </button>
+                </div>
             </div>
 
             <!-- نموذج التسجيل (مخفي افتراضياً) -->
@@ -1335,11 +1351,13 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                         <div class="form-group">
                             <label class="form-label">الاسم الأول <span class="required">*</span></label>
-                            <input type="text" class="form-input" placeholder="أحمد" required>
+                            <input type="text" class="form-input" placeholder="أحمد" required id="registerFirstName">
+                            <div class="error-message"></div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">الاسم الأخير <span class="required">*</span></label>
-                            <input type="text" class="form-input" placeholder="محمد" required>
+                            <input type="text" class="form-input" placeholder="محمد" required id="registerLastName">
+                            <div class="error-message"></div>
                         </div>
                     </div>
 
@@ -1347,16 +1365,18 @@
                         <label class="form-label">البريد الإلكتروني <span class="required">*</span></label>
                         <div class="input-icon">
                             <i class="fas fa-envelope"></i>
-                            <input type="email" class="form-input" placeholder="example@company.com" required>
+                            <input type="email" class="form-input" placeholder="example@company.com" required id="registerEmail">
                         </div>
+                        <div class="error-message"></div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">اسم الشركة <span class="required">*</span></label>
                         <div class="input-icon">
                             <i class="fas fa-building"></i>
-                            <input type="text" class="form-input" placeholder="شركة البناء والتعمير" required>
+                            <input type="text" class="form-input" placeholder="شركة البناء والتعمير" required id="registerCompany">
                         </div>
+                        <div class="error-message"></div>
                     </div>
 
                     <div class="form-group">
@@ -1366,6 +1386,7 @@
                             <input type="password" class="form-input" placeholder="أنشئ كلمة مرور قوية" required id="registerPassword">
                             <i class="fas fa-eye password-toggle" onclick="togglePassword('registerPassword')"></i>
                         </div>
+                        <div class="error-message"></div>
                     </div>
 
                     <div class="form-group">
@@ -1375,6 +1396,7 @@
                             <input type="password" class="form-input" placeholder="أعد إدخال كلمة المرور" required id="confirmPassword">
                             <i class="fas fa-eye password-toggle" onclick="togglePassword('confirmPassword')"></i>
                         </div>
+                        <div class="error-message"></div>
                     </div>
 
                     <div class="checkbox-wrapper" style="margin-bottom: 24px;">
@@ -1808,83 +1830,338 @@
         let currentUser = null;
         let currentTheme = localStorage.getItem('theme') || 'light';
         let sidebarOpen = false;
+        let appConfig = {};
 
         // التهيئة
         document.addEventListener('DOMContentLoaded', () => {
-            applyTheme(currentTheme);
-            checkAuth();
-            initializeAnimations();
+            initializeApp();
         });
 
-        // وظائف المصادقة
-        function handleLogin(e) {
-            e.preventDefault();
-            
-            // التحقق من صحة المدخلات
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            if (!validateEmail(email)) {
-                showError('loginEmail', 'الرجاء إدخال بريد إلكتروني صحيح');
-                return;
-            }
-            
-            // محاكاة تسجيل الدخول
-            showLoadingButton(e.target.querySelector('button[type="submit"]'));
-            
-            setTimeout(() => {
-                currentUser = {
-                    name: 'أحمد محمد',
-                    email: email,
-                    role: 'مدير النظام'
-                };
-                localStorage.setItem('user', JSON.stringify(currentUser));
-                showDashboardScreen();
-                showNotification('تم تسجيل الدخول بنجاح', 'success');
-            }, 1500);
+        async function initializeApp() {
+            applyTheme(currentTheme);
+            await loadAppConfig();
+            await checkAuth();
+            initializeAnimations();
         }
 
-        function handleRegister(e) {
+        // وظائف المصادقة
+        async function loadAppConfig() {
+            try {
+                const response = await fetch('/api/config');
+                if (!response.ok) {
+                    renderGoogleFallback();
+                    return;
+                }
+
+                appConfig = await response.json();
+                if (appConfig?.googleClientId) {
+                    await initializeGoogleSignIn(appConfig.googleClientId);
+                } else {
+                    renderGoogleFallback();
+                }
+            } catch (error) {
+                console.error('فشل تحميل إعدادات التطبيق:', error);
+                renderGoogleFallback('تسجيل الدخول بحساب جوجل غير متاح حالياً');
+            }
+        }
+
+        function renderGoogleFallback(message) {
+            const container = document.getElementById('googleSignInButton');
+            if (!container) return;
+
+            container.innerHTML = `
+                <button type="button" class="btn btn-social btn-full btn-google" disabled>
+                    <i class="fab fa-google"></i>
+                    ${message || 'تسجيل الدخول بحساب جوجل غير متاح حالياً'}
+                </button>
+            `;
+        }
+
+        async function initializeGoogleSignIn(clientId) {
+            try {
+                await loadGoogleScript();
+                if (!window.google || !window.google.accounts || !window.google.accounts.id) {
+                    throw new Error('Google Identity Services not available');
+                }
+
+                const buttonContainer = document.getElementById('googleSignInButton');
+                if (!buttonContainer) {
+                    return;
+                }
+
+                buttonContainer.innerHTML = '';
+                const containerWidth = buttonContainer.clientWidth || buttonContainer.offsetWidth || 320;
+                const buttonWidth = Math.max(200, Math.min(containerWidth, 400));
+                buttonContainer.style.display = 'flex';
+                buttonContainer.style.justifyContent = 'center';
+                window.google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: handleGoogleCredentialResponse,
+                    ux_mode: 'popup',
+                    locale: 'ar'
+                });
+                window.google.accounts.id.renderButton(buttonContainer, {
+                    type: 'standard',
+                    theme: 'filled_blue',
+                    size: 'large',
+                    text: 'signin_with',
+                    shape: 'rectangular',
+                    width: buttonWidth
+                });
+            } catch (error) {
+                console.error('Google Sign-In initialization failed:', error);
+                renderGoogleFallback('تسجيل الدخول بحساب جوجل غير متاح حالياً');
+            }
+        }
+
+        function loadGoogleScript() {
+            return new Promise((resolve, reject) => {
+                if (document.getElementById('google-client-script')) {
+                    resolve();
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.id = 'google-client-script';
+                script.async = true;
+                script.defer = true;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        async function handleGoogleCredentialResponse(response) {
+            if (!response?.credential) {
+                showNotification('تعذر الحصول على بيانات حساب جوجل', 'error');
+                return;
+            }
+
+            try {
+                const result = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ credential: response.credential })
+                });
+
+                let data = {};
+                try {
+                    data = await result.json();
+                } catch (parseError) {
+                    console.error('Failed to parse Google login response', parseError);
+                }
+
+                const errorMessage = data && data.error ? data.error : null;
+
+                if (!result.ok) {
+                    showNotification(errorMessage || 'فشل تسجيل الدخول بحساب جوجل', 'error');
+                    return;
+                }
+
+                const normalizedUser = normalizeUser(data.user);
+                currentUser = normalizedUser;
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(normalizedUser));
+                showDashboardScreen();
+                showNotification('تم تسجيل الدخول باستخدام جوجل بنجاح', 'success');
+            } catch (error) {
+                console.error('Google login failed:', error);
+                showNotification('حدث خطأ أثناء تسجيل الدخول بحساب جوجل', 'error');
+            }
+        }
+
+        async function handleLogin(e) {
             e.preventDefault();
-            
-            // التحقق من كلمة المرور
+
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email) {
+                showError('loginEmail', 'الرجاء إدخال البريد الإلكتروني');
+                return;
+            }
+
+            if (!password) {
+                showError('loginPassword', 'كلمة المرور مطلوبة');
+                return;
+            }
+
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            setButtonLoading(submitButton, true, 'جارٍ تسجيل الدخول...');
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    console.error('Failed to parse login response', parseError);
+                }
+
+                const errorMessage = data && data.error ? data.error : null;
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showError('loginPassword', 'بيانات تسجيل الدخول غير صحيحة');
+                    }
+                    showNotification(errorMessage || 'فشل تسجيل الدخول. يرجى التحقق من البيانات.', 'error');
+                    return;
+                }
+
+                const normalizedUser = normalizeUser(data.user);
+                currentUser = normalizedUser;
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(normalizedUser));
+                showDashboardScreen();
+                showNotification('تم تسجيل الدخول بنجاح', 'success');
+            } catch (error) {
+                console.error('Login error:', error);
+                showNotification('تعذر تسجيل الدخول حالياً. يرجى المحاولة مرة أخرى.', 'error');
+            } finally {
+                setButtonLoading(submitButton, false);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+
+            const firstName = document.getElementById('registerFirstName').value.trim();
+            const lastName = document.getElementById('registerLastName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const company = document.getElementById('registerCompany').value.trim();
             const password = document.getElementById('registerPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
-            
+            const termsAccepted = document.getElementById('terms').checked;
+
+            if (!firstName || !lastName) {
+                showNotification('الرجاء إدخال الاسم الأول والأخير', 'error');
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                showError('registerEmail', 'الرجاء إدخال بريد إلكتروني صحيح');
+                return;
+            }
+
+            if (!company) {
+                showError('registerCompany', 'الرجاء إدخال اسم الشركة');
+                return;
+            }
+
             if (password !== confirmPassword) {
                 showError('confirmPassword', 'كلمات المرور غير متطابقة');
                 return;
             }
-            
+
             if (password.length < 8) {
                 showError('registerPassword', 'كلمة المرور يجب أن تكون 8 أحرف على الأقل');
                 return;
             }
-            
-            // محاكاة التسجيل
-            showLoadingButton(e.target.querySelector('button[type="submit"]'));
-            
-            setTimeout(() => {
+
+            if (!termsAccepted) {
+                showNotification('يجب الموافقة على الشروط والأحكام للمتابعة', 'error');
+                return;
+            }
+
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            setButtonLoading(submitButton, true, 'جارٍ إنشاء الحساب...');
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        firstName,
+                        lastName,
+                        email,
+                        password,
+                        company
+                    })
+                });
+
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    console.error('Failed to parse register response', parseError);
+                }
+
+                const errorMessage = data && data.error ? data.error : null;
+
+                if (!response.ok) {
+                    if (response.status === 400 && typeof errorMessage === 'string' && errorMessage.toLowerCase().includes('email')) {
+                        showError('registerEmail', errorMessage);
+                    }
+                    showNotification(errorMessage || 'تعذر إنشاء الحساب. حاول مرة أخرى.', 'error');
+                    return;
+                }
+
                 showNotification('تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول', 'success');
                 showLogin();
-            }, 1500);
+            } catch (error) {
+                console.error('Register error:', error);
+                showNotification('حدث خطأ غير متوقع أثناء إنشاء الحساب', 'error');
+            } finally {
+                setButtonLoading(submitButton, false);
+            }
         }
 
         function logout() {
             if (confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+                localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 currentUser = null;
+                if (window.google && window.google.accounts && window.google.accounts.id) {
+                    window.google.accounts.id.disableAutoSelect();
+                }
                 showAuthScreen();
                 showNotification('تم تسجيل الخروج بنجاح', 'info');
             }
         }
 
-        function checkAuth() {
-            const savedUser = localStorage.getItem('user');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
+        async function checkAuth() {
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                localStorage.removeItem('user');
+                currentUser = null;
+                showAuthScreen();
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Unauthorized');
+                }
+
+                const data = await response.json();
+                const normalizedUser = normalizeUser(data.user);
+                currentUser = normalizedUser;
+                localStorage.setItem('user', JSON.stringify(normalizedUser));
                 showDashboardScreen();
-            } else {
+            } catch (error) {
+                console.warn('Authentication check failed', error);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                currentUser = null;
                 showAuthScreen();
             }
         }
@@ -1941,19 +2218,45 @@
             }
         }
 
+        function normalizeUser(user = {}) {
+            const nameParts = [];
+            if (user.firstName) nameParts.push(user.firstName);
+            if (user.lastName) nameParts.push(user.lastName);
+
+            let displayName = (user.name || nameParts.join(' ')).trim();
+            if (!displayName && user.email) {
+                displayName = user.email.split('@')[0];
+            }
+
+            return {
+                ...user,
+                name: displayName || 'المستخدم',
+                role: user.role || 'مستخدم'
+            };
+        }
+
         // تحديث معلومات المستخدم
         function updateUserInfo() {
             if (currentUser) {
                 const avatarEl = document.querySelector('.user-avatar');
                 const nameEl = document.querySelector('.user-name');
                 const roleEl = document.querySelector('.user-role');
-                
+
+                const displayName = (currentUser.name || '').trim();
+                const role = currentUser.role || 'مستخدم';
+
                 if (avatarEl) {
-                    const initials = currentUser.name.split(' ').map(n => n[0]).join('');
-                    avatarEl.textContent = initials;
+                    const initials = displayName
+                        .split(' ')
+                        .filter(Boolean)
+                        .map(word => word[0])
+                        .join('')
+                        .substring(0, 2)
+                        .toUpperCase();
+                    avatarEl.textContent = initials || 'م';
                 }
-                if (nameEl) nameEl.textContent = currentUser.name;
-                if (roleEl) roleEl.textContent = currentUser.role;
+                if (nameEl) nameEl.textContent = displayName || 'المستخدم';
+                if (roleEl) roleEl.textContent = role;
             }
         }
 
@@ -1978,27 +2281,44 @@
 
         function showError(inputId, message) {
             const input = document.getElementById(inputId);
-            const errorEl = input.parentElement.querySelector('.error-message');
-            
+            if (!input) return;
+
+            const formGroup = input.closest('.form-group');
+            const errorEl = (formGroup && formGroup.querySelector('.error-message')) ||
+                (input.parentElement && input.parentElement.querySelector('.error-message'));
+
             input.classList.add('error');
-            errorEl.textContent = message;
-            errorEl.classList.add('show');
-            
+            if (formGroup) formGroup.classList.add('has-error');
+            if (errorEl) {
+                errorEl.textContent = message;
+                errorEl.classList.add('show');
+            }
+
             setTimeout(() => {
                 input.classList.remove('error');
-                errorEl.classList.remove('show');
+                if (formGroup) formGroup.classList.remove('has-error');
+                if (errorEl) {
+                    errorEl.classList.remove('show');
+                }
             }, 3000);
         }
 
-        function showLoadingButton(button) {
-            const originalContent = button.innerHTML;
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ المعالجة...';
-            
-            setTimeout(() => {
+        function setButtonLoading(button, isLoading, loadingText = 'جارٍ المعالجة...') {
+            if (!button) return;
+
+            if (isLoading) {
+                if (!button.dataset.originalContent) {
+                    button.dataset.originalContent = button.innerHTML;
+                }
+                button.disabled = true;
+                button.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${loadingText}`;
+            } else {
                 button.disabled = false;
-                button.innerHTML = originalContent;
-            }, 1500);
+                if (button.dataset.originalContent) {
+                    button.innerHTML = button.dataset.originalContent;
+                    delete button.dataset.originalContent;
+                }
+            }
         }
 
         function showNotification(message, type = 'info') {
