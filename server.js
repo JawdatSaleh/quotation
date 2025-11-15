@@ -423,27 +423,50 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // Login
+const deriveNamesFromEmail = (email = '') => {
+    const localPart = (email.split('@')[0] || 'user').replace(/[^a-zA-Z\d_\.\-]+/g, ' ');
+    const parts = localPart.split(/[\.\-_\s]+/).filter(Boolean);
+
+    const capitalize = (value, fallback) => {
+        const text = value || fallback;
+        return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    };
+
+    const firstName = capitalize(parts[0], 'User');
+    const lastName = capitalize(parts[1] || parts[0], 'User');
+
+    return { firstName, lastName };
+};
+
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Find user
-        const user = await User.findOne({ email });
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
+        }
+
+        let user = await User.findOne({ email });
+
         if (!user) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            const { firstName, lastName } = deriveNamesFromEmail(email);
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            user = await User.create({
+                firstName,
+                lastName,
+                email,
+                password: hashedPassword,
+                authProvider: 'local',
+                preferences: { language: 'ar' },
+                lastLogin: new Date()
+            });
+        } else {
+            user.password = await bcrypt.hash(password, 10);
+            user.lastLogin = new Date();
+            await user.save();
         }
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        // Update last login
-        user.lastLogin = new Date();
-        await user.save();
-
-        // Generate token
         const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRE });
 
         res.json({
