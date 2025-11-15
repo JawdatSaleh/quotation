@@ -1,4 +1,6 @@
 // server.js - Main Express Server
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -13,6 +15,8 @@ const puppeteer = require('puppeteer');
 const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 
 // Initialize Express App
 const app = express();
@@ -24,6 +28,8 @@ const PUBLIC_URL = process.env.PUBLIC_URL;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/quotepro';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRE = '7d';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 // Middleware
 app.use(helmet());
@@ -99,6 +105,8 @@ const userSchema = new mongoose.Schema({
     lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
+    authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
+    googleId: { type: String, index: true },
     role: { type: String, enum: ['admin', 'editor', 'viewer'], default: 'editor' },
     company: {
         name: String,
@@ -351,10 +359,17 @@ const authorize = (...roles) => {
 
 // Health Check
 app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
+    res.json({
+        status: 'OK',
         timestamp: new Date().toISOString(),
         uptime: process.uptime()
+    });
+});
+
+// Public configuration
+app.get('/api/config', (req, res) => {
+    res.json({
+        googleClientId: GOOGLE_CLIENT_ID || null
     });
 });
 
@@ -408,27 +423,50 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // Login
+const deriveNamesFromEmail = (email = '') => {
+    const localPart = (email.split('@')[0] || 'user').replace(/[^a-zA-Z\d_\.\-]+/g, ' ');
+    const parts = localPart.split(/[\.\-_\s]+/).filter(Boolean);
+
+    const capitalize = (value, fallback) => {
+        const text = value || fallback;
+        return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    };
+
+    const firstName = capitalize(parts[0], 'User');
+    const lastName = capitalize(parts[1] || parts[0], 'User');
+
+    return { firstName, lastName };
+};
+
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Find user
-        const user = await User.findOne({ email });
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
+        }
+
+        let user = await User.findOne({ email });
+
         if (!user) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            const { firstName, lastName } = deriveNamesFromEmail(email);
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            user = await User.create({
+                firstName,
+                lastName,
+                email,
+                password: hashedPassword,
+                authProvider: 'local',
+                preferences: { language: 'ar' },
+                lastLogin: new Date()
+            });
+        } else {
+            user.password = await bcrypt.hash(password, 10);
+            user.lastLogin = new Date();
+            await user.save();
         }
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        // Update last login
-        user.lastLogin = new Date();
-        await user.save();
-
-        // Generate token
         const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRE });
 
         res.json({
@@ -446,6 +484,97 @@ app.post('/api/auth/login', async (req, res) => {
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ error: 'Login failed' });
+    }
+});
+
+app.post('/api/auth/google', async (req, res) => {
+    try {
+        if (!googleClient) {
+            return res.status(500).json({ error: 'Google login is not configured' });
+        }
+
+        const { credential } = req.body;
+
+        if (!credential) {
+            return res.status(400).json({ error: 'Google credential is required' });
+        }
+
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: GOOGLE_CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+
+        if (!payload) {
+            return res.status(400).json({ error: 'Invalid Google credential' });
+        }
+
+        const {
+            email,
+            sub: googleId,
+            given_name: givenName,
+            family_name: familyName,
+            name,
+            email_verified: emailVerified
+        } = payload;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Google account does not include an email address' });
+        }
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            const randomPassword = crypto.randomBytes(32).toString('hex');
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+            user = new User({
+                firstName: givenName || name || 'Google',
+                lastName: familyName || '',
+                email,
+                password: hashedPassword,
+                authProvider: 'google',
+                googleId,
+                emailVerified: emailVerified ?? false,
+                lastLogin: new Date()
+            });
+
+            await user.save();
+        } else {
+            if (!user.isActive) {
+                return res.status(403).json({ error: 'Account is inactive' });
+            }
+
+            user.googleId = user.googleId || googleId;
+            if (user.authProvider === 'local') {
+                user.authProvider = 'google';
+            }
+            if (emailVerified && !user.emailVerified) {
+                user.emailVerified = true;
+            }
+            user.lastLogin = new Date();
+            await user.save();
+        }
+
+        const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRE });
+
+        res.json({
+            message: 'Login successful',
+            token,
+            user: {
+                id: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                role: user.role,
+                company: user.company,
+                emailVerified: user.emailVerified
+            }
+        });
+    } catch (error) {
+        console.error('Google auth error:', error);
+        res.status(500).json({ error: 'Google login failed' });
     }
 });
 
