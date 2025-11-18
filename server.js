@@ -32,7 +32,11 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 // Middleware
-app.use(helmet());
+// تعطيل Content-Security-Policy لأن الواجهة تستخدم سكربتات وأحداث inline
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
 app.use(cors());
 app.use(compression());
 app.use(express.json({ limit: '50mb' }));
