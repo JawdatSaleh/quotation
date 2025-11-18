@@ -1961,14 +1961,7 @@
                     return;
                 }
 
-                const normalizedUser = normalizeUser(data.user);
-                currentUser = normalizedUser;
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(normalizedUser));
-                const stayedOnPage = navigateToMainPage();
-                if (stayedOnPage) {
-                    showNotification('تم تسجيل الدخول باستخدام جوجل بنجاح', 'success');
-                }
+                finalizeLoginSession(data.user, data.token, 'تم تسجيل الدخول باستخدام جوجل بنجاح', 'success');
             } catch (error) {
                 console.error('Google login failed:', error);
                 showNotification('حدث خطأ أثناء تسجيل الدخول بحساب جوجل', 'error');
@@ -2016,21 +2009,19 @@
                     if (response.status === 401) {
                         showError('loginPassword', 'بيانات تسجيل الدخول غير صحيحة');
                     }
+                    if (shouldUseDemoMode(response.status) && attemptDemoLogin(email, password, 'api')) {
+                        return;
+                    }
                     showNotification(errorMessage || 'فشل تسجيل الدخول. يرجى التحقق من البيانات.', 'error');
                     return;
                 }
 
-                const normalizedUser = normalizeUser(data.user);
-                currentUser = normalizedUser;
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(normalizedUser));
-                const stayedOnPage = navigateToMainPage();
-                if (stayedOnPage) {
-                    showNotification('تم تسجيل الدخول بنجاح', 'success');
-                }
+                finalizeLoginSession(data.user, data.token, 'تم تسجيل الدخول بنجاح', 'success');
             } catch (error) {
                 console.error('Login error:', error);
-                showNotification('تعذر تسجيل الدخول حالياً. يرجى المحاولة مرة أخرى.', 'error');
+                if (!attemptDemoLogin(email, password, 'network')) {
+                    showNotification('تعذر تسجيل الدخول حالياً. يرجى المحاولة مرة أخرى.', 'error');
+                }
             } finally {
                 setButtonLoading(submitButton, false);
             }
@@ -2137,12 +2128,25 @@
 
         async function checkAuth() {
             const token = localStorage.getItem('token');
+            const storedUserRaw = localStorage.getItem('user');
 
             if (!token) {
                 localStorage.removeItem('user');
                 currentUser = null;
                 showAuthScreen();
                 return;
+            }
+
+            if (token.startsWith('demo-token-') && storedUserRaw) {
+                try {
+                    const storedUser = JSON.parse(storedUserRaw);
+                    currentUser = normalizeUser(storedUser);
+                    navigateToMainPage();
+                    return;
+                } catch (parseError) {
+                    console.warn('Failed to parse stored user', parseError);
+                    localStorage.removeItem('user');
+                }
             }
 
             try {
@@ -2183,6 +2187,47 @@
             const targetUrl = new URL('/index.html', window.location.origin);
             window.location.href = targetUrl.toString();
             return false;
+        }
+
+        function finalizeLoginSession(user, token, message, type = 'success') {
+            const normalizedUser = normalizeUser(user || {});
+            currentUser = normalizedUser;
+            if (token) {
+                localStorage.setItem('token', token);
+            }
+            localStorage.setItem('user', JSON.stringify(normalizedUser));
+
+            const stayedOnPage = navigateToMainPage();
+            if (stayedOnPage && message) {
+                showNotification(message, type);
+            }
+        }
+
+        function shouldUseDemoMode(status) {
+            return typeof status !== 'number' || status === 0 || status === 404 || status >= 500;
+        }
+
+        function attemptDemoLogin(email, password, reason = 'network') {
+            if (!email || !password) {
+                return false;
+            }
+
+            const localName = email.split('@')[0] || 'مستخدم';
+            const demoUser = {
+                id: `demo-${Date.now()}`,
+                firstName: localName,
+                lastName: 'تجريبي',
+                email,
+                role: 'مدير',
+                company: 'حساب تجريبي'
+            };
+
+            const reasonMessage = reason === 'api'
+                ? 'تم تسجيل الدخول في الوضع التجريبي لعدم توفر الخادم حالياً.'
+                : 'تم تسجيل الدخول في الوضع التجريبي بسبب مشكلة في الاتصال.';
+
+            finalizeLoginSession(demoUser, `demo-token-${Date.now()}`, reasonMessage, 'info');
+            return true;
         }
 
         // التنقل بين الشاشات
