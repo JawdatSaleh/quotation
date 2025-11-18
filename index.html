@@ -2171,15 +2171,16 @@
         }
 
         function navigateToMainPage() {
-            const currentPath = window.location.pathname;
-            const isOnMainIndex = currentPath === '/' || currentPath === '/index.html' || currentPath.endsWith('/index.html');
+            const dashboardScreen = document.getElementById('dashboardScreen');
+            const authScreen = document.getElementById('authScreen');
+            const isDomReady = Boolean(dashboardScreen && authScreen);
 
-            if (isOnMainIndex) {
+            if (isDomReady) {
                 showDashboardScreen();
                 return true;
             }
 
-            const targetUrl = new URL('/', window.location.origin);
+            const targetUrl = new URL('/index.html', window.location.origin);
             window.location.href = targetUrl.toString();
             return false;
         }
