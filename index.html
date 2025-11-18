@@ -31,6 +31,7 @@
             --sidebar-width: 280px;
             --header-height: 70px;
             --border-radius: 12px;
+            --card-bg: #ffffff;
         }
 
         /* الوضع الداكن */
@@ -40,6 +41,7 @@
             --text-secondary: #cbd5e1;
             --border-color: #334155;
             --dark-bg: #020617;
+            --card-bg: #1f2937;
         }
 
         /* إعدادات عامة */
@@ -1270,6 +1272,243 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--primary-color);
         }
+
+        /* أقسام الصفحات الديناميكية */
+        .page-section {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 24px;
+        }
+
+        .page-section .section-title {
+            margin-bottom: 4px;
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-top: 4px;
+        }
+
+        .info-card-grid,
+        .clients-grid,
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .info-card,
+        .client-card,
+        .template-card {
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 20px;
+            background: var(--light-bg);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .info-card:hover,
+        .client-card:hover,
+        .template-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .info-card h3 {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .info-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .pill-button {
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 8px 18px;
+            background: transparent;
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .pill-button.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .template-card {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .template-card header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .template-meta {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .template-tags,
+        .client-meta,
+        .support-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .template-tags span,
+        .client-meta span {
+            background: rgba(15, 23, 42, 0.05);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+        }
+
+        [data-theme="dark"] .template-tags span,
+        [data-theme="dark"] .client-meta span {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        .template-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: auto;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-badge.success { background: rgba(5, 150, 105, 0.15); color: #047857; }
+        .status-badge.pending { background: rgba(217, 119, 6, 0.15); color: #b45309; }
+        .status-badge.info { background: rgba(8, 145, 178, 0.15); color: #0e7490; }
+
+        .client-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .client-card h3 {
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .client-card footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .client-card button {
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Cairo', sans-serif;
+            transition: background 0.2s ease;
+        }
+
+        .client-card button:hover {
+            background: var(--primary-hover);
+        }
+
+        .support-links button {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: transparent;
+            padding: 10px 18px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .page-form {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .form-grid .form-group {
+            margin-bottom: 0;
+        }
+
+        textarea.form-input {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .preview-card {
+            border: 1px dashed var(--border-color);
+            border-radius: 18px;
+            padding: 24px;
+            text-align: center;
+            background: var(--light-bg);
+        }
+
+        .billing-plan {
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+        }
+
+        .billing-plan.highlight {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .document-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
     </style>
 </head>
 <body>
@@ -1443,28 +1682,34 @@
                 <div class="nav-section">
                     <div class="nav-label">الرئيسية</div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link active" onclick="showDashboard()">
+                        <a href="#" class="nav-link active" data-page="dashboard" onclick="showDashboard(event)">
                             <i class="fas fa-home"></i>
                             <span>لوحة التحكم</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showTemplates()">
+                        <a href="#" class="nav-link" data-page="templates" onclick="showTemplates(event)">
                             <i class="fas fa-layer-group"></i>
                             <span>القوالب</span>
                             <span class="nav-badge">جديد</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showDocuments()">
+                        <a href="#" class="nav-link" data-page="documents" onclick="showDocuments(event)">
                             <i class="fas fa-folder"></i>
                             <span>المستندات</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showClients()">
+                        <a href="#" class="nav-link" data-page="clients" onclick="showClients(event)">
                             <i class="fas fa-users"></i>
                             <span>العملاء</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-page="reports" onclick="showReports(event)">
+                            <i class="fas fa-chart-line"></i>
+                            <span>التقارير</span>
                         </a>
                     </div>
                 </div>
@@ -1472,19 +1717,19 @@
                 <div class="nav-section">
                     <div class="nav-label">إنشاء جديد</div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="createQuotation()">
+                        <a href="#" class="nav-link" data-page="create-quotation" onclick="createQuotation(event)">
                             <i class="fas fa-file-alt"></i>
                             <span>عرض سعر جديد</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="createInvoice()">
+                        <a href="#" class="nav-link" data-page="create-invoice" onclick="createInvoice(event)">
                             <i class="fas fa-file-invoice-dollar"></i>
                             <span>فاتورة جديدة</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="createProposal()">
+                        <a href="#" class="nav-link" data-page="create-proposal" onclick="createProposal(event)">
                             <i class="fas fa-file-contract"></i>
                             <span>مقترح جديد</span>
                         </a>
@@ -1494,25 +1739,25 @@
                 <div class="nav-section">
                     <div class="nav-label">الإعدادات</div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showCompanySettings()">
+                        <a href="#" class="nav-link" data-page="company-settings" onclick="showCompanySettings(event)">
                             <i class="fas fa-building"></i>
                             <span>إعدادات الشركة</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showBranding()">
+                        <a href="#" class="nav-link" data-page="branding" onclick="showBranding(event)">
                             <i class="fas fa-palette"></i>
                             <span>الهوية البصرية</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showProfile()">
+                        <a href="#" class="nav-link" data-page="profile" onclick="showProfile(event)">
                             <i class="fas fa-user"></i>
                             <span>الملف الشخصي</span>
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showBilling()">
+                        <a href="#" class="nav-link" data-page="billing" onclick="showBilling(event)">
                             <i class="fas fa-credit-card"></i>
                             <span>الفوترة والاشتراك</span>
                         </a>
@@ -1521,7 +1766,7 @@
 
                 <div class="nav-section">
                     <div class="nav-item">
-                        <a href="#" class="nav-link" onclick="showHelp()">
+                        <a href="#" class="nav-link" data-page="help" onclick="showHelp(event)">
                             <i class="fas fa-question-circle"></i>
                             <span>المساعدة والدعم</span>
                         </a>
@@ -1831,9 +2076,108 @@
         let currentTheme = localStorage.getItem('theme') || 'light';
         let sidebarOpen = false;
         let appConfig = {};
+        let pageContentElement = null;
+        const pageTemplates = {};
+
+        const templateCatalog = [
+            {
+                id: 'modern-quotation',
+                title: 'قالب عرض سعر حديث',
+                description: 'تصميم عصري بألوان متدرجة مع مساحة لعرض الحزم والأسعار.',
+                category: 'quotation',
+                badge: 'الأكثر استخداماً',
+                badgeType: 'success',
+                tags: ['مناسب للشركات الناشئة', 'تنسيق PDF', 'جاهز للترجمة']
+            },
+            {
+                id: 'minimal-invoice',
+                title: 'فاتورة بسيطة',
+                description: 'فاتورة نظيفة وسهلة القراءة مع أقسام للضرائب والملاحظات.',
+                category: 'invoice',
+                badge: 'مفضل لدى المستخدمين',
+                badgeType: 'info',
+                tags: ['متجاوبة', 'متعددة العملات']
+            },
+            {
+                id: 'proposal-gold',
+                title: 'مقترح ذهبي',
+                description: 'قالب مقترح للشركات الاستشارية مع قسم للتواقيع.',
+                category: 'proposal',
+                badge: 'مميز',
+                badgeType: 'pending',
+                tags: ['صفحات متعددة', 'يوفر جدول زمني']
+            },
+            {
+                id: 'retainer-contract',
+                title: 'اتفاقية خدمات شهرية',
+                description: 'عقد جاهز للعملاء بعقود دعم مستمرة.',
+                category: 'contract',
+                badge: 'جديد',
+                badgeType: 'info',
+                tags: ['مؤتمت', 'مصدق إلكترونياً']
+            },
+            {
+                id: 'advanced-invoice',
+                title: 'فاتورة متقدمة مع جداول زمنية',
+                description: 'مثالي لشركات المقاولات التي تعمل بنظام الدفعات المرحلية.',
+                category: 'invoice',
+                badge: 'يدعم الدفعات',
+                badgeType: 'success',
+                tags: ['دفعات مجدولة', 'مخطط تقدم']
+            },
+            {
+                id: 'premium-quotation',
+                title: 'عرض سعر مميز',
+                description: 'قالب مخصص للوكالات الإبداعية مع مساحة لعرض الأعمال السابقة.',
+                category: 'quotation',
+                badge: 'مظهر فاخر',
+                badgeType: 'pending',
+                tags: ['يدعم الفيديو', 'معرض صور']
+            }
+        ];
+
+        const documentRecords = [
+            { number: 'QUO-2025-001', client: 'شركة البناء والتعمير', type: 'quotation', amount: 45000, status: 'draft', date: '15 يناير 2025' },
+            { number: 'INV-2025-012', client: 'مؤسسة النجاح للتجارة', type: 'invoice', amount: 128500, status: 'sent', date: '14 يناير 2025' },
+            { number: 'QUO-2024-089', client: 'شركة الطاقة الخضراء', type: 'quotation', amount: 67300, status: 'approved', date: '13 يناير 2025' },
+            { number: 'PRO-2025-005', client: 'مجموعة الأعمال المتقدمة', type: 'proposal', amount: 195000, status: 'rejected', date: '12 يناير 2025' },
+            { number: 'INV-2025-013', client: 'مؤسسة الإتقان', type: 'invoice', amount: 98500, status: 'sent', date: '10 يناير 2025' }
+        ];
+
+        const clientsDirectory = [
+            { name: 'شركة البناء والتعمير', contact: 'contact@buildpro.sa', segment: 'مقاولات عامة', value: 180000, status: 'عميل نشط' },
+            { name: 'مؤسسة النجاح للتجارة', contact: 'sales@najah.sa', segment: 'تجارة الجملة', value: 128500, status: 'بحاجة متابعة' },
+            { name: 'شركة الطاقة الخضراء', contact: 'info@greenpower.sa', segment: 'طاقة متجددة', value: 67300, status: 'موافق عليه' },
+            { name: 'مجموعة الأعمال المتقدمة', contact: 'projects@advance.sa', segment: 'استشارات أعمال', value: 195000, status: 'تحت التفاوض' }
+        ];
+
+        const createDocumentConfig = {
+            quotation: { label: 'عرض سعر', color: 'quotation', icon: 'fa-file-alt' },
+            invoice: { label: 'فاتورة', color: 'invoice', icon: 'fa-file-invoice-dollar' },
+            proposal: { label: 'مقترح', color: 'proposal', icon: 'fa-file-contract' }
+        };
+
+        const pageBuilders = {
+            templates: buildTemplatesPage,
+            documents: buildDocumentsPage,
+            clients: buildClientsPage,
+            reports: buildReportsPage,
+            'company-settings': buildCompanySettingsPage,
+            branding: buildBrandingPage,
+            profile: buildProfilePage,
+            billing: buildBillingPage,
+            help: buildHelpPage,
+            'create-quotation': () => buildCreateDocumentPage('quotation'),
+            'create-invoice': () => buildCreateDocumentPage('invoice'),
+            'create-proposal': () => buildCreateDocumentPage('proposal')
+        };
 
         // التهيئة
         document.addEventListener('DOMContentLoaded', () => {
+            pageContentElement = document.getElementById('pageContent');
+            if (pageContentElement && !pageTemplates.dashboard) {
+                pageTemplates.dashboard = pageContentElement.innerHTML;
+            }
             initializeApp();
         });
 
@@ -2444,6 +2788,788 @@
             document.head.appendChild(styleSheet);
         }
 
+        // إدارة المحتوى الديناميكي
+        function formatCurrency(value) {
+            if (typeof value !== 'number') {
+                const parsed = Number(value);
+                value = Number.isNaN(parsed) ? 0 : parsed;
+            }
+            try {
+                return new Intl.NumberFormat('ar-SA', {
+                    style: 'currency',
+                    currency: 'SAR',
+                    minimumFractionDigits: 0
+                }).format(value);
+            } catch (error) {
+                return `${value} ر.س`;
+            }
+        }
+
+        function renderPage(pageKey) {
+            if (!pageContentElement) {
+                pageContentElement = document.getElementById('pageContent');
+            }
+            if (!pageContentElement) return;
+
+            let markup = '';
+            if (pageKey === 'dashboard') {
+                markup = pageTemplates.dashboard || '';
+            } else if (pageBuilders[pageKey]) {
+                markup = pageBuilders[pageKey]();
+            } else {
+                markup = getEmptyStateTemplate(pageKey);
+            }
+
+            pageContentElement.innerHTML = markup;
+            if (pageContentElement.scrollTo) {
+                pageContentElement.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            initializePageEnhancements(pageKey);
+        }
+
+        function getEmptyStateTemplate(pageKey) {
+            return `
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">${pageKey}</h2>
+                            <p class="section-subtitle">لا توجد بيانات لعرضها حالياً.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function initializePageEnhancements(pageKey) {
+            if (pageKey === 'templates') {
+                initializeTemplatesPage();
+            } else if (pageKey === 'documents') {
+                initializeDocumentsPage();
+            } else if (pageKey === 'clients') {
+                initializeClientsPage();
+            } else if (pageKey === 'reports') {
+                initializeReportsPage();
+            } else if (pageKey === 'company-settings') {
+                initializeSettingsForm('companySettingsForm', 'تم حفظ إعدادات الشركة بنجاح');
+                initializeSettingsForm('financialSettingsForm', 'تم حفظ بيانات الفوترة');
+            } else if (pageKey === 'branding') {
+                initializeBrandingPage();
+            } else if (pageKey === 'profile') {
+                initializeSettingsForm('profileForm', 'تم تحديث الملف الشخصي');
+            } else if (pageKey === 'billing') {
+                initializeBillingPage();
+            } else if (pageKey === 'help') {
+                initializeHelpPage();
+            }
+
+            if (pageKey && pageKey.startsWith('create-')) {
+                initializeCreateDocumentForm(pageKey.replace('create-', ''));
+            }
+        }
+
+        function initializeTemplatesPage() {
+            const filterButtons = document.querySelectorAll('[data-template-filter]');
+            const cards = document.querySelectorAll('.template-card');
+            const activateFilter = (filter) => {
+                filterButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.templateFilter === filter));
+                cards.forEach(card => {
+                    const isVisible = filter === 'all' || card.dataset.category === filter;
+                    card.style.display = isVisible ? 'flex' : 'none';
+                });
+            };
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => activateFilter(button.dataset.templateFilter));
+            });
+            if (filterButtons.length) {
+                activateFilter(filterButtons[0].dataset.templateFilter);
+            }
+
+            document.querySelectorAll('[data-template-preview]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const templateName = button.dataset.templatePreview;
+                    showNotification(`تم فتح معاينة قالب ${templateName}`, 'info');
+                });
+            });
+        }
+
+        function initializeDocumentsPage() {
+            const filterButtons = document.querySelectorAll('[data-document-filter]');
+            const rows = document.querySelectorAll('[data-document-row]');
+            const applyFilter = (filter) => {
+                filterButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.documentFilter === filter));
+                rows.forEach(row => {
+                    const shouldShow = filter === 'all' || row.dataset.status === filter;
+                    row.style.display = shouldShow ? '' : 'none';
+                });
+            };
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => applyFilter(button.dataset.documentFilter));
+            });
+            applyFilter('all');
+
+            document.querySelectorAll('[data-document-action]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.dataset.documentAction;
+                    showNotification(action || 'تم تحديث المستند', 'info');
+                });
+            });
+        }
+
+        function initializeClientsPage() {
+            const form = document.getElementById('newClientForm');
+            if (form) {
+                form.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    const nameInput = form.querySelector('[name="clientName"]');
+                    const name = nameInput ? nameInput.value.trim() : '';
+                    showNotification(`تم إضافة ${name || 'عميل جديد'} إلى قائمة المتابعة`, 'success');
+                    form.reset();
+                });
+            }
+
+            document.querySelectorAll('[data-client-action]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const clientName = button.dataset.clientAction;
+                    showNotification(`تم إرسال رسالة إلى ${clientName}`, 'info');
+                });
+            });
+        }
+
+        function initializeReportsPage() {
+            const rangeSelect = document.getElementById('reportRange');
+            if (rangeSelect) {
+                rangeSelect.addEventListener('change', () => {
+                    showNotification(`تم تحديث التقارير لفترة ${rangeSelect.value}`, 'info');
+                });
+            }
+
+            const exportButton = document.getElementById('exportReportButton');
+            if (exportButton) {
+                exportButton.addEventListener('click', () => {
+                    showNotification('جارٍ تجهيز ملف PDF للتقارير', 'success');
+                });
+            }
+        }
+
+        function initializeSettingsForm(formId, successMessage = 'تم حفظ التغييرات بنجاح') {
+            const form = document.getElementById(formId);
+            if (!form) return;
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                showNotification(successMessage, 'success');
+            });
+        }
+
+        function initializeBrandingPage() {
+            initializeSettingsForm('brandingForm', 'تم تحديث الهوية البصرية');
+            const preview = document.getElementById('brandingPreview');
+            const primaryPicker = document.getElementById('primaryColorPicker');
+            const accentPicker = document.getElementById('accentColorPicker');
+            const updatePreview = () => {
+                if (!preview) return;
+                const primary = primaryPicker ? primaryPicker.value : '#1e40af';
+                const accent = accentPicker ? accentPicker.value : '#0891b2';
+                preview.style.background = primary;
+                preview.style.color = '#fff';
+                preview.querySelectorAll('span').forEach(span => {
+                    span.style.color = accent;
+                });
+            };
+
+            [primaryPicker, accentPicker].forEach(picker => {
+                if (picker) picker.addEventListener('input', updatePreview);
+            });
+            updatePreview();
+        }
+
+        function initializeBillingPage() {
+            document.querySelectorAll('[data-plan]').forEach(button => {
+                button.addEventListener('click', () => {
+                    showNotification(`تم اختيار خطة ${button.dataset.plan}`, 'success');
+                });
+            });
+        }
+
+        function initializeHelpPage() {
+            document.querySelectorAll('[data-support-channel]').forEach(button => {
+                button.addEventListener('click', () => {
+                    showNotification(`سيتم التواصل معك عبر ${button.dataset.supportChannel}`, 'info');
+                });
+            });
+        }
+
+        function initializeCreateDocumentForm(docType) {
+            const form = document.getElementById('createDocumentForm');
+            if (!form) return;
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const config = createDocumentConfig[docType] || createDocumentConfig.quotation;
+                const titleInput = form.querySelector('[name="documentTitle"]');
+                const title = titleInput ? titleInput.value.trim() : config.label;
+                showNotification(`تم حفظ ${config.label} "${title || config.label}" في المسودات`, 'success');
+                form.reset();
+            });
+        }
+
+        // قوالب الصفحات
+        function buildTemplatesPage() {
+            const templateCards = templateCatalog.map(template => `
+                <div class="template-card" data-category="${template.category}">
+                    <header>
+                        <div>
+                            <h3>${template.title}</h3>
+                            <p class="template-meta">${template.description}</p>
+                        </div>
+                        <span class="status-badge ${template.badgeType}">
+                            <i class="fas fa-star"></i>
+                            ${template.badge}
+                        </span>
+                    </header>
+                    <div class="template-tags">
+                        ${template.tags.map(tag => `<span>${tag}</span>`).join('')}
+                    </div>
+                    <div class="template-actions">
+                        <button type="button" class="btn btn-secondary" data-template-preview="${template.title}">
+                            <i class="fas fa-eye"></i>
+                            معاينة
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="createDocumentFromTemplate('${template.category}', '${template.title}')">
+                            <i class="fas fa-magic"></i>
+                            استخدام القالب
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            return `
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">القوالب الاحترافية</h2>
+                            <p class="section-subtitle">اختر القالب المناسب لمستنداتك وابدأ التحرير فوراً.</p>
+                        </div>
+                        <button class="btn btn-secondary" type="button" onclick="showNotification('تم تحديث معرض القوالب', 'success')">
+                            <i class="fas fa-sync"></i>
+                            تحديث القوالب
+                        </button>
+                    </div>
+                    <div class="filter-group">
+                        <button class="pill-button" data-template-filter="all">الكل</button>
+                        <button class="pill-button" data-template-filter="quotation">عروض الأسعار</button>
+                        <button class="pill-button" data-template-filter="invoice">الفواتير</button>
+                        <button class="pill-button" data-template-filter="proposal">المقترحات</button>
+                        <button class="pill-button" data-template-filter="contract">العقود</button>
+                    </div>
+                    <div class="templates-grid">
+                        ${templateCards}
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildDocumentsPage() {
+            const statusLabels = {
+                draft: 'مسودة',
+                sent: 'مرسلة',
+                approved: 'موافق عليه',
+                rejected: 'مرفوض'
+            };
+            const typeMeta = {
+                quotation: { label: 'عرض سعر', icon: 'fa-file-alt', className: 'quotation' },
+                invoice: { label: 'فاتورة', icon: 'fa-file-invoice-dollar', className: 'invoice' },
+                proposal: { label: 'مقترح', icon: 'fa-file-contract', className: 'proposal' }
+            };
+
+            const rows = documentRecords.map(doc => {
+                const meta = typeMeta[doc.type] || typeMeta.quotation;
+                return `
+                    <tr data-document-row data-status="${doc.status}">
+                        <td><span class="doc-number">${doc.number}</span></td>
+                        <td>${doc.client}</td>
+                        <td><span class="doc-type ${meta.className}"><i class="fas ${meta.icon}"></i> ${meta.label}</span></td>
+                        <td>${formatCurrency(doc.amount)}</td>
+                        <td><span class="doc-status ${doc.status}">${statusLabels[doc.status] || doc.status}</span></td>
+                        <td>${doc.date}</td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="table-btn" data-document-action="تم فتح ${doc.number}"><i class="fas fa-eye"></i></button>
+                                <button class="table-btn" data-document-action="تم تعديل ${doc.number}"><i class="fas fa-edit"></i></button>
+                                <button class="table-btn" data-document-action="تم إنشاء نسخة من ${doc.number}"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            return `
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">المستندات</h2>
+                            <p class="section-subtitle">تابع أحدث العروض والفواتير والمقترحات في مكان واحد.</p>
+                        </div>
+                        <button class="btn btn-primary" type="button" onclick="createQuotation()">
+                            <i class="fas fa-plus"></i>
+                            مستند جديد
+                        </button>
+                    </div>
+                    <div class="document-filters">
+                        <button class="pill-button active" data-document-filter="all">الكل</button>
+                        <button class="pill-button" data-document-filter="draft">مسودات</button>
+                        <button class="pill-button" data-document-filter="sent">مرسلة</button>
+                        <button class="pill-button" data-document-filter="approved">معتمدة</button>
+                        <button class="pill-button" data-document-filter="rejected">مرفوضة</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>رقم المستند</th>
+                                    <th>العميل</th>
+                                    <th>النوع</th>
+                                    <th>المبلغ</th>
+                                    <th>الحالة</th>
+                                    <th>التاريخ</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildClientsPage() {
+            const cards = clientsDirectory.map(client => `
+                <div class="client-card">
+                    <h3>${client.name}</h3>
+                    <p>${client.contact}</p>
+                    <div class="client-meta">
+                        <span><i class="fas fa-industry"></i> ${client.segment}</span>
+                        <span><i class="fas fa-wallet"></i> ${formatCurrency(client.value)}</span>
+                    </div>
+                    <footer>
+                        <span class="status-badge info">${client.status}</span>
+                        <button type="button" data-client-action="${client.name}">
+                            <i class="fas fa-paper-plane"></i>
+                            تواصل
+                        </button>
+                    </footer>
+                </div>
+            `).join('');
+
+            return `
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">إدارة العملاء</h2>
+                            <p class="section-subtitle">سجل العملاء الحاليين واحصائيات قيمتهم السوقية.</p>
+                        </div>
+                        <button class="btn btn-secondary" type="button" onclick="showNotification('تم تحديث بيانات العملاء', 'info')">
+                            <i class="fas fa-sync"></i>
+                            تحديث القائمة
+                        </button>
+                    </div>
+                    <div class="clients-grid">
+                        ${cards}
+                    </div>
+                </div>
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">إضافة عميل جديد</h2>
+                            <p class="section-subtitle">أدخل بيانات العميل لحفظها في قاعدة البيانات.</p>
+                        </div>
+                    </div>
+                    <form class="page-form" id="newClientForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">اسم العميل</label>
+                                <input type="text" class="form-input" name="clientName" placeholder="مثال: شركة النور" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">البريد الإلكتروني</label>
+                                <input type="email" class="form-input" name="clientEmail" placeholder="client@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">مجال العميل</label>
+                                <input type="text" class="form-input" name="clientSegment" placeholder="تقنية، مقاولات، ...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">القيمة المتوقعة</label>
+                                <input type="number" class="form-input" name="clientValue" placeholder="50000">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: fit-content;">
+                            <i class="fas fa-save"></i>
+                            حفظ العميل
+                        </button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function buildReportsPage() {
+            const totalDocuments = documentRecords.length;
+            const approved = documentRecords.filter(doc => doc.status === 'approved').length;
+            const pending = documentRecords.filter(doc => doc.status === 'draft' || doc.status === 'sent').length;
+            const totalRevenue = documentRecords
+                .filter(doc => doc.type === 'invoice')
+                .reduce((sum, doc) => sum + doc.amount, 0);
+
+            const timeline = documentRecords.map(doc => `
+                <tr>
+                    <td>${doc.date}</td>
+                    <td>${doc.number}</td>
+                    <td>${doc.client}</td>
+                    <td>${formatCurrency(doc.amount)}</td>
+                    <td>${doc.type === 'invoice' ? 'فاتورة' : doc.type === 'proposal' ? 'مقترح' : 'عرض سعر'}</td>
+                </tr>
+            `).join('');
+
+            return `
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">تقارير الأداء</h2>
+                            <p class="section-subtitle">مؤشرات شاملة لمتابعة نمو الأعمال.</p>
+                        </div>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <select class="form-input" id="reportRange" style="width: auto;">
+                                <option value="آخر 7 أيام">آخر 7 أيام</option>
+                                <option value="آخر 30 يوماً">آخر 30 يوماً</option>
+                                <option value="ربع سنوي">ربع سنوي</option>
+                            </select>
+                            <button class="btn btn-primary" type="button" id="exportReportButton">
+                                <i class="fas fa-file-export"></i>
+                                تصدير التقرير
+                            </button>
+                        </div>
+                    </div>
+                    <div class="info-card-grid">
+                        <div class="info-card">
+                            <h3>إجمالي المستندات</h3>
+                            <div class="info-value">${totalDocuments}</div>
+                        </div>
+                        <div class="info-card">
+                            <h3>مستندات قيد المعالجة</h3>
+                            <div class="info-value">${pending}</div>
+                        </div>
+                        <div class="info-card">
+                            <h3>المستندات المعتمدة</h3>
+                            <div class="info-value">${approved}</div>
+                        </div>
+                        <div class="info-card">
+                            <h3>إجمالي الفواتير</h3>
+                            <div class="info-value">${formatCurrency(totalRevenue)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">الأنشطة الأخيرة</h2>
+                            <p class="section-subtitle">سجل تفصيلي لأحدث العمليات.</p>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>رقم المستند</th>
+                                    <th>العميل</th>
+                                    <th>المبلغ</th>
+                                    <th>النوع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${timeline}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildCompanySettingsPage() {
+            return `
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">بيانات الشركة</h2>
+                            <p class="section-subtitle">قم بتحديث بيانات هويتك التجارية وعناوين التواصل.</p>
+                        </div>
+                    </div>
+                    <form class="page-form" id="companySettingsForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">اسم الشركة</label>
+                                <input type="text" class="form-input" placeholder="شركة النجاح" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">البريد الرسمي</label>
+                                <input type="email" class="form-input" placeholder="info@company.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">رقم السجل التجاري</label>
+                                <input type="text" class="form-input" placeholder="1010111111">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">رقم ضريبة القيمة المضافة</label>
+                                <input type="text" class="form-input" placeholder="3000XXXX">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: fit-content;">
+                            <i class="fas fa-save"></i>
+                            حفظ البيانات
+                        </button>
+                    </form>
+                </div>
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">إعدادات الفوترة</h2>
+                            <p class="section-subtitle">تحديث الحساب البنكي وبيانات الدفع.</p>
+                        </div>
+                    </div>
+                    <form class="page-form" id="financialSettingsForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">اسم البنك</label>
+                                <input type="text" class="form-input" placeholder="بنك الراجحي">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">رقم الحساب</label>
+                                <input type="text" class="form-input" placeholder="SA00 0000 0000 0000">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">رابط الدفع الإلكتروني</label>
+                                <input type="url" class="form-input" placeholder="https://pay.company.com">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-secondary" style="width: fit-content;">
+                            <i class="fas fa-check"></i>
+                            تحديث الإعدادات
+                        </button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function buildBrandingPage() {
+            return `
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">الهوية البصرية</h2>
+                            <p class="section-subtitle">اختر الألوان والخطوط التي تعكس علامتك التجارية.</p>
+                        </div>
+                    </div>
+                    <form class="page-form" id="brandingForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">اللون الأساسي</label>
+                                <input type="color" id="primaryColorPicker" value="#1e40af" class="form-input" style="padding: 4px; height: 48px;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">اللون الثانوي</label>
+                                <input type="color" id="accentColorPicker" value="#0891b2" class="form-input" style="padding: 4px; height: 48px;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">نوع الخط</label>
+                                <select class="form-input">
+                                    <option>خط القاهرة - Cairo</option>
+                                    <option>خط توريال - Tauri</option>
+                                    <option>خط روبوتو - Roboto</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">شعار الشركة</label>
+                                <input type="file" class="form-input">
+                            </div>
+                        </div>
+                        <div class="preview-card" id="brandingPreview">
+                            <p style="font-weight: 700; font-size: 20px; margin-bottom: 8px;">معاينة الهوية</p>
+                            <span>نظام العروض والفواتير</span>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: fit-content;">
+                            <i class="fas fa-save"></i>
+                            حفظ الهوية
+                        </button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function buildProfilePage() {
+            return `
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">الملف الشخصي</h2>
+                            <p class="section-subtitle">قم بتحديث بيانات الحساب ومعلومات الاتصال.</p>
+                        </div>
+                    </div>
+                    <form class="page-form" id="profileForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">الاسم الكامل</label>
+                                <input type="text" class="form-input" placeholder="أحمد محمد">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">البريد الإلكتروني</label>
+                                <input type="email" class="form-input" placeholder="ahmed@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">الهاتف</label>
+                                <input type="tel" class="form-input" placeholder="0500000000">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">الدور الوظيفي</label>
+                                <input type="text" class="form-input" placeholder="مدير مالي">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: fit-content;">
+                            <i class="fas fa-save"></i>
+                            حفظ التعديلات
+                        </button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function buildBillingPage() {
+            return `
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">الخطط والاشتراكات</h2>
+                            <p class="section-subtitle">اختر الباقة المناسبة لاحتياجات فريقك.</p>
+                        </div>
+                    </div>
+                    <div class="info-card-grid">
+                        <div class="billing-plan">
+                            <h3>الخطة الأساسية</h3>
+                            <p>${formatCurrency(199)} / شهر</p>
+                            <ul style="margin-top: 12px; line-height: 1.8;">
+                                <li>حتى 3 مستخدمين</li>
+                                <li>50 مستند شهرياً</li>
+                                <li>دعم عبر البريد</li>
+                            </ul>
+                            <button class="btn btn-secondary" type="button" data-plan="الخطة الأساسية" style="margin-top: 12px;">
+                                اختيار الخطة
+                            </button>
+                        </div>
+                        <div class="billing-plan highlight">
+                            <h3>خطة الأعمال</h3>
+                            <p>${formatCurrency(399)} / شهر</p>
+                            <ul style="margin-top: 12px; line-height: 1.8;">
+                                <li>حتى 10 مستخدمين</li>
+                                <li>مستندات غير محدودة</li>
+                                <li>دعم على مدار الساعة</li>
+                            </ul>
+                            <button class="btn btn-primary" type="button" data-plan="خطة الأعمال" style="margin-top: 12px;">
+                                تفعيل الخطة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildHelpPage() {
+            return `
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">مركز الدعم</h2>
+                            <p class="section-subtitle">اختر الطريقة الأنسب للتواصل مع فريقنا.</p>
+                        </div>
+                    </div>
+                    <div class="support-links">
+                        <button type="button" data-support-channel="البريد الإلكتروني">
+                            <i class="fas fa-envelope"></i>
+                            دعم البريد
+                        </button>
+                        <button type="button" data-support-channel="المحادثة المباشرة">
+                            <i class="fas fa-comments"></i>
+                            محادثة مباشرة
+                        </button>
+                        <button type="button" data-support-channel="مركز الاتصال">
+                            <i class="fas fa-phone"></i>
+                            مركز الاتصال
+                        </button>
+                    </div>
+                </div>
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">المعرفة السريعة</h2>
+                            <p class="section-subtitle">أبرز المقالات التعليمية لبدء الاستخدام.</p>
+                        </div>
+                    </div>
+                    <ul style="line-height: 2; padding-right: 16px;">
+                        <li>طريقة إنشاء أول عرض سعر خلال 5 دقائق.</li>
+                        <li>كيفية ربط الحساب مع أنظمة الدفع.</li>
+                        <li>أفضل الممارسات لإدارة العملاء داخل المنصة.</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        function buildCreateDocumentPage(docType) {
+            const config = createDocumentConfig[docType] || createDocumentConfig.quotation;
+            return `
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">إنشاء ${config.label} جديد</h2>
+                            <p class="section-subtitle">أدخل بيانات المستند لإرسالها مباشرة إلى العميل.</p>
+                        </div>
+                        <button class="btn btn-secondary" type="button" onclick="showDocuments()">
+                            <i class="fas fa-folder-open"></i>
+                            عرض المستندات
+                        </button>
+                    </div>
+                    <form class="page-form" id="createDocumentForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">اسم العميل</label>
+                                <input type="text" class="form-input" placeholder="شركة التميز" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">عنوان المستند</label>
+                                <input type="text" class="form-input" name="documentTitle" placeholder="${config.label} مشروع أبراج" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">القيمة المتوقعة</label>
+                                <input type="number" class="form-input" placeholder="50000" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">تاريخ الاستحقاق</label>
+                                <input type="date" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">الوصف التفصيلي</label>
+                            <textarea class="form-input" placeholder="اكتب تفاصيل العناصر أو الخدمات المقدمة"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: fit-content;">
+                            <i class="fas fa-save"></i>
+                            حفظ ${config.label}
+                        </button>
+                    </form>
+                </div>
+            `;
+        }
+
         // وظائف التنقل
         function setActiveNav(element) {
             document.querySelectorAll('.nav-link').forEach(link => {
@@ -2452,61 +3578,105 @@
             if (element) element.classList.add('active');
         }
 
+        function setActiveNavByPage(pageName) {
+            if (!pageName) return;
+            const target = document.querySelector(`.nav-link[data-page="${pageName}"]`);
+            setActiveNav(target);
+        }
+
         // وظائف الصفحات
-        function showDashboard() {
-            console.log('عرض لوحة التحكم...');
+        function showDashboard(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('dashboard');
+            renderPage('dashboard');
         }
 
-        function showTemplates() {
-            console.log('عرض القوالب...');
+        function showTemplates(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('templates');
+            renderPage('templates');
         }
 
-        function showDocuments() {
-            console.log('عرض المستندات...');
+        function showDocuments(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('documents');
+            renderPage('documents');
         }
 
-        function showClients() {
-            console.log('عرض العملاء...');
+        function showClients(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('clients');
+            renderPage('clients');
         }
 
-        function createQuotation() {
-            console.log('إنشاء عرض سعر جديد...');
+        function createQuotation(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('create-quotation');
+            renderPage('create-quotation');
         }
 
-        function createInvoice() {
-            console.log('إنشاء فاتورة جديدة...');
+        function createInvoice(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('create-invoice');
+            renderPage('create-invoice');
         }
 
-        function createProposal() {
-            console.log('إنشاء مقترح جديد...');
+        function createProposal(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('create-proposal');
+            renderPage('create-proposal');
         }
 
-        function showCompanySettings() {
-            console.log('عرض إعدادات الشركة...');
+        function createDocumentFromTemplate(category, templateTitle) {
+            const handlers = {
+                quotation: createQuotation,
+                invoice: createInvoice,
+                proposal: createProposal,
+                contract: createProposal
+            };
+            const handler = handlers[category] || createQuotation;
+            handler();
+            showNotification(`تم تطبيق قالب ${templateTitle} على مستند جديد`, 'success');
         }
 
-        function showBranding() {
-            console.log('عرض إعدادات الهوية البصرية...');
+        function showCompanySettings(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('company-settings');
+            renderPage('company-settings');
         }
 
-        function showProfile() {
-            console.log('عرض الملف الشخصي...');
+        function showBranding(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('branding');
+            renderPage('branding');
         }
 
-        function showBilling() {
-            console.log('عرض الفوترة والاشتراك...');
+        function showProfile(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('profile');
+            renderPage('profile');
         }
 
-        function showHelp() {
-            console.log('عرض المساعدة...');
+        function showBilling(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('billing');
+            renderPage('billing');
         }
 
-        function showReports() {
-            console.log('عرض التقارير...');
+        function showHelp(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('help');
+            renderPage('help');
         }
 
-        function showSettings() {
-            console.log('عرض الإعدادات...');
+        function showReports(event) {
+            if (event) event.preventDefault();
+            setActiveNavByPage('reports');
+            renderPage('reports');
+        }
+
+        function showSettings(event) {
+            showCompanySettings(event);
         }
 
         // التعامل مع تغيير حجم الشاشة
