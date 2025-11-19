@@ -89,6 +89,23 @@
             width: 300px;
         }
 
+        .template-category-select {
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-family: 'Cairo', sans-serif;
+            background: white;
+            cursor: pointer;
+            min-width: 170px;
+        }
+
+        .template-category-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
         .toolbar-title input:hover {
             background: var(--gray-100);
         }
@@ -661,6 +678,12 @@
             </button>
             <div class="toolbar-title">
                 <input type="text" value="قالب عرض سعر البناء" id="templateName">
+                <select id="templateCategory" class="template-category-select">
+                    <option value="quotation" selected>عرض سعر</option>
+                    <option value="invoice">فاتورة</option>
+                    <option value="proposal">مقترح</option>
+                    <option value="contract">عقد</option>
+                </select>
             </div>
         </div>
         <div class="toolbar-actions">
@@ -913,9 +936,17 @@
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
         // إدارة الحالة
+        const TEMPLATE_STORAGE_KEY = 'customTemplates';
+        const TEMPLATE_API_ENDPOINT = '/api/templates';
+        const DEMO_TOKEN_PREFIX = 'demo-token-';
         let draggedElement = null;
         let currentTemplate = {
+            id: null,
+            serverId: null,
+            source: 'custom',
+            baseTemplateId: null,
             name: 'قالب عرض سعر البناء',
+            category: 'quotation',
             sections: [],
             settings: {
                 bgColor: '#ffffff',
@@ -927,13 +958,257 @@
                 currency: 'SAR'
             }
         };
+        let returnPage = 'templates';
+        let initialMessageDisplayed = false;
 
         // التهيئة
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            await hydrateTemplateFromQuery();
             initializeDragDrop();
             initializeColorPickers();
-            showNotification('مرحباً! ابدأ بسحب المكونات إلى اللوحة', 'info');
+            if (!initialMessageDisplayed) {
+                showNotification('مرحباً! ابدأ بسحب المكونات إلى اللوحة', 'info');
+                initialMessageDisplayed = true;
+            }
         });
+
+        function getAuthToken() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token || token.startsWith(DEMO_TOKEN_PREFIX)) {
+                    return null;
+                }
+                return token;
+            } catch (error) {
+                console.warn('Auth token unavailable:', error);
+                return null;
+            }
+        }
+
+        function canUseServerStorage() {
+            return Boolean(getAuthToken());
+        }
+
+        function getAuthorizedHeaders() {
+            const token = getAuthToken();
+            if (!token) {
+                return null;
+            }
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        async function fetchTemplateFromServer(templateId) {
+            const headers = getAuthorizedHeaders();
+            if (!headers) {
+                return null;
+            }
+            const response = await fetch(`${TEMPLATE_API_ENDPOINT}/${templateId}`, { headers });
+            if (!response.ok) {
+                throw new Error('Server template request failed');
+            }
+            const data = await response.json();
+            if (!data?.template) {
+                return null;
+            }
+            return normalizeServerTemplate(data.template);
+        }
+
+        async function saveTemplateToServer(payload) {
+            const headers = getAuthorizedHeaders();
+            if (!headers) {
+                return null;
+            }
+            const method = currentTemplate.serverId ? 'PUT' : 'POST';
+            const endpoint = currentTemplate.serverId
+                ? `${TEMPLATE_API_ENDPOINT}/${currentTemplate.serverId}`
+                : TEMPLATE_API_ENDPOINT;
+            const response = await fetch(endpoint, {
+                method,
+                headers,
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const errorPayload = await response.json().catch(() => ({}));
+                throw new Error(errorPayload?.error || 'Failed to save template');
+            }
+            const data = await response.json();
+            return data?.template ? normalizeServerTemplate(data.template) : null;
+        }
+
+        function normalizeServerTemplate(template) {
+            if (!template) return null;
+            const friendlyTitle = template.name || template.title || 'قالب بدون اسم';
+            return {
+                id: template._id || template.id,
+                title: friendlyTitle,
+                category: template.type || template.category || 'quotation',
+                status: template.status || 'draft',
+                description: template.description || (template.updatedAt ? `آخر تحديث: ${formatArDateTime(new Date(template.updatedAt))}` : 'قالب محفوظ على الخادم'),
+                updatedAt: template.updatedAt || new Date().toISOString(),
+                html: template.html || '',
+                settings: template.settings || {},
+                tags: Array.isArray(template.tags) ? template.tags : [],
+                source: 'server'
+            };
+        }
+
+        function updateLocalTemplateCache(templateData) {
+            const templates = loadSavedTemplates();
+            const existingIndex = templates.findIndex(template => template.id === templateData.id);
+            if (existingIndex > -1) {
+                templates[existingIndex] = templateData;
+            } else {
+                templates.push(templateData);
+            }
+
+            if (typeof localStorage === 'undefined') {
+                return;
+            }
+            try {
+                localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+            } catch (error) {
+                console.warn('تعذر تحديث القوالب المخزنة محلياً:', error);
+            }
+        }
+
+        async function hydrateTemplateFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            returnPage = params.get('return') || 'templates';
+            currentTemplate.source = params.get('source') || 'custom';
+            currentTemplate.baseTemplateId = params.get('templateId') || null;
+
+            const providedTitle = params.get('title');
+            const providedCategory = params.get('category');
+            const mode = params.get('mode') || 'edit';
+
+            const templateNameInput = document.getElementById('templateName');
+            if (providedTitle && templateNameInput) {
+                templateNameInput.value = providedTitle;
+                currentTemplate.name = providedTitle;
+            }
+
+            const categorySelect = document.getElementById('templateCategory');
+            if (categorySelect) {
+                categorySelect.value = providedCategory || categorySelect.value;
+                currentTemplate.category = categorySelect.value;
+            }
+
+            if (currentTemplate.source === 'custom' && currentTemplate.baseTemplateId) {
+                currentTemplate.id = currentTemplate.baseTemplateId;
+            } else {
+                currentTemplate.id = currentTemplate.id || `custom-${Date.now()}`;
+            }
+
+            const shouldLoadFromServer = currentTemplate.source === 'server' && currentTemplate.baseTemplateId;
+            const shouldLoadFromLocal = currentTemplate.source === 'custom' && currentTemplate.baseTemplateId;
+
+            if (shouldLoadFromServer) {
+                try {
+                    showLoading();
+                    const savedTemplate = await fetchTemplateFromServer(currentTemplate.baseTemplateId);
+                    if (savedTemplate) {
+                        applyTemplateFromStorage(savedTemplate);
+                        currentTemplate.serverId = savedTemplate.id;
+                        initialMessageDisplayed = true;
+                        showNotification('تم تحميل القالب من الخادم للتعديل', 'success');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('فشل تحميل القالب من الخادم:', error);
+                    showNotification('تعذر تحميل القالب من الخادم، سيتم إنشاء قالب جديد', 'error');
+                } finally {
+                    hideLoading();
+                }
+            }
+
+            if (shouldLoadFromLocal) {
+                const savedTemplate = getTemplateFromStorage(currentTemplate.baseTemplateId);
+                if (savedTemplate) {
+                    applyTemplateFromStorage(savedTemplate);
+                    initialMessageDisplayed = true;
+                    showNotification('تم تحميل القالب المحفوظ للتعديل', 'success');
+                    return;
+                }
+            }
+
+            if (mode === 'create' && !initialMessageDisplayed) {
+                showNotification('ابدأ في إنشاء قالبك الجديد عبر سحب المكونات إلى اللوحة', 'info');
+                initialMessageDisplayed = true;
+            }
+        }
+
+        function loadSavedTemplates() {
+            if (typeof localStorage === 'undefined') {
+                return [];
+            }
+            try {
+                const stored = localStorage.getItem(TEMPLATE_STORAGE_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch (error) {
+                console.warn('تعذر قراءة القوالب المحفوظة:', error);
+                return [];
+            }
+        }
+
+        function getTemplateFromStorage(templateId) {
+            if (!templateId) return null;
+            return loadSavedTemplates().find(template => template.id === templateId) || null;
+        }
+
+        function applyTemplateFromStorage(template) {
+            const canvas = document.getElementById('documentCanvas');
+            if (!canvas) return;
+            canvas.innerHTML = template.html || canvas.innerHTML;
+
+            currentTemplate.id = template.id;
+            currentTemplate.serverId = template.source === 'server' ? template.id : null;
+            currentTemplate.name = template.title || template.name || currentTemplate.name;
+            currentTemplate.category = template.category || currentTemplate.category;
+            currentTemplate.status = template.status || currentTemplate.status;
+            currentTemplate.tags = template.tags || currentTemplate.tags;
+
+            const templateNameInput = document.getElementById('templateName');
+            if (templateNameInput && (template.title || template.name)) {
+                templateNameInput.value = template.title || template.name;
+            }
+
+            const categorySelect = document.getElementById('templateCategory');
+            if (categorySelect && template.category) {
+                categorySelect.value = template.category;
+            }
+
+            if (template.settings) {
+                currentTemplate.settings = {
+                    ...currentTemplate.settings,
+                    ...template.settings
+                };
+                if (template.settings.bgColor) {
+                    const bgColorInput = document.getElementById('bgColor');
+                    if (bgColorInput) {
+                        bgColorInput.value = template.settings.bgColor;
+                        if (bgColorInput.nextElementSibling) {
+                            bgColorInput.nextElementSibling.value = template.settings.bgColor;
+                        }
+                    }
+                }
+                if (template.settings.primaryColor) {
+                    const primaryColorInput = document.getElementById('primaryColor');
+                    if (primaryColorInput) {
+                        primaryColorInput.value = template.settings.primaryColor;
+                        if (primaryColorInput.nextElementSibling) {
+                            primaryColorInput.nextElementSibling.value = template.settings.primaryColor;
+                        }
+                    }
+                }
+            }
+
+            updateDropZones();
+            initializeEditors();
+            applyTemplateSettings();
+        }
 
         // السحب والإفلات
         function initializeDragDrop() {
@@ -963,9 +1238,19 @@
 
         function updateDropZones() {
             const canvas = document.getElementById('documentCanvas');
-            const dropZones = canvas.querySelectorAll('.drop-zone');
-            
+            if (!canvas) return;
+
+            let dropZones = canvas.querySelectorAll('.drop-zone');
+            if (!dropZones.length) {
+                const newPosition = canvas.querySelectorAll('.template-section').length;
+                canvas.insertAdjacentHTML('beforeend', createDropZone(newPosition));
+                dropZones = canvas.querySelectorAll('.drop-zone');
+            }
+
             dropZones.forEach(zone => {
+                zone.removeEventListener('dragover', handleDragOver);
+                zone.removeEventListener('drop', handleDrop);
+                zone.removeEventListener('dragleave', handleDragLeave);
                 zone.addEventListener('dragover', handleDragOver);
                 zone.addEventListener('drop', handleDrop);
                 zone.addEventListener('dragleave', handleDragLeave);
@@ -986,7 +1271,7 @@
             e.currentTarget.classList.remove('drag-over');
             
             const componentType = e.dataTransfer.getData('component');
-            const position = parseInt(e.currentTarget.dataset.position);
+            const position = parseInt(e.currentTarget.dataset.position, 10) || 0;
             
             addComponent(componentType, position);
         }
@@ -1612,17 +1897,21 @@
 
         function applyTemplateSettings() {
             const documentCanvas = document.getElementById('documentCanvas');
+            if (!documentCanvas) return;
             const bgColor = document.getElementById('bgColor').value;
             const primaryColor = document.getElementById('primaryColor').value;
-            
+
             documentCanvas.style.background = bgColor;
             document.documentElement.style.setProperty('--primary', primaryColor);
+
+            currentTemplate.settings.bgColor = bgColor;
+            currentTemplate.settings.primaryColor = primaryColor;
         }
 
         // إجراءات القالب
         function goBack() {
             if (confirm('هل أنت متأكد؟ قد تفقد التغييرات غير المحفوظة.')) {
-                window.location.href = '/dashboard';
+                redirectToReturnPage();
             }
         }
 
@@ -1647,22 +1936,146 @@
             `);
         }
 
-        function saveAsDraft() {
+        async function saveAsDraft() {
             showLoading();
-            // حفظ القالب كمسودة
-            setTimeout(() => {
+            try {
+                const template = await persistTemplate('draft');
+                if (template) {
+                    showNotification(`تم حفظ "${template.title}" كمسودة`, 'success');
+                }
+            } finally {
                 hideLoading();
-                showNotification('تم حفظ القالب كمسودة بنجاح', 'success');
-            }, 1500);
+            }
         }
 
-        function publishTemplate() {
+        async function publishTemplate() {
             showLoading();
-            // نشر القالب
-            setTimeout(() => {
+            try {
+                const template = await persistTemplate('published');
+                if (template) {
+                    showNotification(`تم نشر "${template.title}" بنجاح`, 'success');
+                    setTimeout(() => redirectToReturnPage(), 800);
+                }
+            } finally {
                 hideLoading();
-                showNotification('تم نشر القالب بنجاح', 'success');
-            }, 1500);
+            }
+        }
+
+        async function persistTemplate(status = 'draft') {
+            const canvas = document.getElementById('documentCanvas');
+            if (!canvas) return null;
+
+            const templateNameInput = document.getElementById('templateName');
+            const categorySelect = document.getElementById('templateCategory');
+
+            const templateTitle = templateNameInput ? (templateNameInput.value.trim() || 'قالب بدون اسم') : 'قالب بدون اسم';
+            const templateCategory = categorySelect ? categorySelect.value : 'quotation';
+
+            currentTemplate.name = templateTitle;
+            currentTemplate.category = templateCategory;
+            currentTemplate.status = status;
+            currentTemplate.id = currentTemplate.serverId || currentTemplate.id || `custom-${Date.now()}`;
+
+            const now = new Date();
+            const templateTags = Array.isArray(currentTemplate.tags) ? currentTemplate.tags : [];
+            const templateData = {
+                id: currentTemplate.serverId || currentTemplate.id,
+                title: templateTitle,
+                category: templateCategory,
+                status,
+                description: `آخر تحديث: ${formatArDateTime(now)}`,
+                updatedAt: now.toISOString(),
+                html: canvas.innerHTML,
+                settings: {
+                    bgColor: currentTemplate.settings.bgColor,
+                    primaryColor: currentTemplate.settings.primaryColor
+                },
+                tags: templateTags,
+                source: canUseServerStorage() ? 'server' : currentTemplate.source || 'custom'
+            };
+
+            const payload = {
+                name: templateTitle,
+                title: templateTitle,
+                type: templateCategory,
+                category: templateCategory,
+                status,
+                description: templateData.description,
+                html: templateData.html,
+                settings: currentTemplate.settings,
+                tags: templateTags,
+                isPublic: false
+            };
+
+            if (canUseServerStorage()) {
+                try {
+                    const savedTemplate = await saveTemplateToServer(payload);
+                    if (savedTemplate) {
+                        currentTemplate.serverId = savedTemplate.id;
+                        currentTemplate.id = savedTemplate.id;
+                        currentTemplate.source = 'server';
+                        templateData.id = savedTemplate.id;
+                        templateData.status = savedTemplate.status || status;
+                        templateData.description = savedTemplate.description || templateData.description;
+                        templateData.updatedAt = savedTemplate.updatedAt || templateData.updatedAt;
+                        templateData.html = savedTemplate.html || templateData.html;
+                        templateData.source = 'server';
+                        templateData.tags = savedTemplate.tags || templateData.tags;
+                        updateLocalTemplateCache(templateData);
+                        return templateData;
+                    }
+                } catch (error) {
+                    console.error('فشل حفظ القالب على الخادم:', error);
+                    showNotification('تعذر الحفظ على الخادم، سيتم استخدام التخزين المحلي مؤقتاً', 'error');
+                }
+            }
+
+            if (typeof localStorage === 'undefined') {
+                showNotification('التخزين المحلي غير متاح في هذا المتصفح', 'error');
+                return null;
+            }
+
+            templateData.source = templateData.source || 'custom';
+            currentTemplate.source = templateData.source;
+            updateLocalTemplateCache(templateData);
+            return templateData;
+        }
+
+        function formatArDateTime(date) {
+            try {
+                const normalized = date instanceof Date ? date : new Date(date);
+                return new Intl.DateTimeFormat('ar-SA', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                }).format(normalized);
+            } catch (error) {
+                try {
+                    return new Date(date).toLocaleString('ar-SA');
+                } catch (fallbackError) {
+                    console.warn('تعذر تنسيق التاريخ العربي:', fallbackError);
+                    return '';
+                }
+            }
+        }
+
+        function redirectToReturnPage() {
+            if (returnPage === 'document-workspace') {
+                const params = new URLSearchParams();
+                params.set('type', currentTemplate.category || 'quotation');
+                if (currentTemplate.serverId || currentTemplate.id) {
+                    params.set('templateId', currentTemplate.serverId || currentTemplate.id);
+                }
+                params.set('source', currentTemplate.serverId ? 'server' : (currentTemplate.source || 'custom'));
+                params.set('title', currentTemplate.name || 'قالب مخصص');
+                window.location.href = `document_workspace.html?${params.toString()}`;
+                return;
+            }
+
+            if (returnPage && returnPage !== 'dashboard') {
+                window.location.href = `index.html?page=${returnPage}`;
+            } else {
+                window.location.href = 'index.html';
+            }
         }
 
         function uploadLogo() {

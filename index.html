@@ -317,6 +317,18 @@
             color: white;
         }
 
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px dashed var(--border-color);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: rgba(30, 64, 175, 0.06);
+        }
+
         .btn-full {
             width: 100%;
         }
@@ -1357,6 +1369,31 @@
             margin-top: 16px;
         }
 
+        .template-builder-actions {
+            margin-top: 24px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.02);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .template-builder-actions p {
+            margin: 4px 0 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .template-builder-actions .builder-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
         .template-card {
             display: flex;
             flex-direction: column;
@@ -1401,7 +1438,121 @@
         .template-actions {
             display: flex;
             gap: 12px;
+            flex-wrap: wrap;
             margin-top: auto;
+        }
+
+        .template-empty-state {
+            border: 1px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 24px;
+        }
+
+        .template-empty-state h4 {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .template-preview-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .template-preview-modal.open {
+            display: flex;
+        }
+
+        .template-preview-dialog {
+            background: var(--card-bg, #fff);
+            width: min(100%, 960px);
+            max-height: 90vh;
+            border-radius: 20px;
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .template-preview-header,
+        .template-preview-footer {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .template-preview-footer {
+            border-top: 1px solid var(--border-color);
+            border-bottom: none;
+        }
+
+        .template-preview-body {
+            padding: 24px;
+            background: var(--light-bg);
+            overflow: auto;
+        }
+
+        .template-preview-body .drop-zone,
+        .template-preview-body .section-controls {
+            display: none !important;
+        }
+
+        .template-preview-placeholder {
+            border: 1px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            background: white;
+            color: var(--text-secondary);
+        }
+
+        .template-preview-placeholder h3 {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .template-preview-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+
+        .template-preview-tags span {
+            background: rgba(15, 23, 42, 0.05);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+        }
+
+        .template-preview-note {
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .modal-close-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .modal-close-btn:hover {
+            color: var(--primary-color);
         }
 
         .status-badge {
@@ -2077,7 +2228,16 @@
         let sidebarOpen = false;
         let appConfig = {};
         let pageContentElement = null;
+        let previewTemplateState = null;
+        let activePage = 'dashboard';
         const pageTemplates = {};
+        const CUSTOM_TEMPLATE_STORAGE_KEY = 'customTemplates';
+        const DEMO_TOKEN_PREFIX = 'demo-token-';
+        const templateState = {
+            cache: [],
+            syncing: false,
+            lastSync: 0
+        };
 
         const templateCatalog = [
             {
@@ -2136,6 +2296,204 @@
             }
         ];
 
+        function loadTemplatesFromLocalStorage() {
+            if (typeof localStorage === 'undefined') {
+                return [];
+            }
+            try {
+                const stored = localStorage.getItem(CUSTOM_TEMPLATE_STORAGE_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch (error) {
+                console.warn('تعذر قراءة القوالب المخصصة:', error);
+                return [];
+            }
+        }
+
+        function saveTemplatesToLocalStorage(templates) {
+            if (typeof localStorage === 'undefined') {
+                return;
+            }
+            try {
+                localStorage.setItem(CUSTOM_TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+            } catch (error) {
+                console.warn('تعذر تحديث القوالب المخصصة:', error);
+            }
+        }
+
+        function getAuthToken() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token || token.startsWith(DEMO_TOKEN_PREFIX)) {
+                    return null;
+                }
+                return token;
+            } catch (error) {
+                console.warn('تعذر قراءة التوكن:', error);
+                return null;
+            }
+        }
+
+        function canUseServerApis() {
+            return Boolean(getAuthToken());
+        }
+
+        function getCustomTemplates() {
+            if (!templateState.cache.length) {
+                templateState.cache = loadTemplatesFromLocalStorage();
+            }
+            return templateState.cache;
+        }
+
+        function formatTemplateUpdatedAt(dateInput) {
+            try {
+                const normalized = dateInput ? new Date(dateInput) : new Date();
+                return new Intl.DateTimeFormat('ar-SA', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                }).format(normalized);
+            } catch (error) {
+                try {
+                    return new Date(dateInput).toLocaleString('ar-SA');
+                } catch (fallbackError) {
+                    console.warn('تعذر تنسيق التاريخ:', fallbackError);
+                    return '';
+                }
+            }
+        }
+
+        function normalizeServerTemplate(template) {
+            if (!template) {
+                return null;
+            }
+            const id = template._id || template.id;
+            return {
+                id,
+                title: template.name || template.title || 'قالب بدون اسم',
+                category: template.type || template.category || 'quotation',
+                status: template.status || 'draft',
+                description: template.description || (template.updatedAt ? `آخر تحديث: ${formatTemplateUpdatedAt(template.updatedAt)}` : 'قالب محفوظ على الخادم'),
+                updatedAt: template.updatedAt || new Date().toISOString(),
+                html: template.html || '',
+                tags: Array.isArray(template.tags) ? template.tags : [],
+                source: 'server'
+            };
+        }
+
+        async function syncCustomTemplatesFromServer(force = false) {
+            if (!canUseServerApis()) {
+                templateState.cache = loadTemplatesFromLocalStorage();
+                return templateState.cache;
+            }
+
+            if (templateState.syncing) {
+                return templateState.cache;
+            }
+
+            if (!force && templateState.lastSync && (Date.now() - templateState.lastSync < 60000)) {
+                return templateState.cache;
+            }
+
+            templateState.syncing = true;
+            try {
+                const token = getAuthToken();
+                const response = await fetch('/api/templates?limit=100', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch templates');
+                }
+                const data = await response.json();
+                const normalized = (data.templates || [])
+                    .map(normalizeServerTemplate)
+                    .filter(Boolean);
+                templateState.cache = normalized;
+                templateState.lastSync = Date.now();
+                saveTemplatesToLocalStorage(normalized);
+                if (activePage === 'templates') {
+                    renderPage('templates');
+                }
+                return normalized;
+            } catch (error) {
+                console.warn('تعذر مزامنة القوالب مع الخادم:', error);
+                return templateState.cache;
+            } finally {
+                templateState.syncing = false;
+            }
+        }
+
+        function escapeAttribute(value) {
+            if (typeof value !== 'string') {
+                return value ? String(value) : '';
+            }
+            return value
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function buildTemplateCard(template, { source = 'default' } = {}) {
+            const displayTitle = template.title || 'قالب بدون اسم';
+            const safeTitle = displayTitle.replace(/'/g, "\\'");
+            const dataTitle = escapeAttribute(displayTitle);
+            const category = template.category || 'quotation';
+            const isUserTemplate = source === 'custom' || source === 'server';
+            const description = template.description || (isUserTemplate ? 'قالب مخصص تم إنشاؤه من خلال منشئ القوالب' : 'قالب جاهز للاستخدام.');
+            const tagsList = Array.isArray(template.tags) && template.tags.length
+                ? template.tags
+                : (isUserTemplate ? ['قالب مخصص', template.status === 'published' ? 'منشور' : 'مسودة'] : []);
+            const badgeLabel = template.badge || (isUserTemplate ? (template.status === 'published' ? 'منشور' : 'مسودة') : 'جاهز');
+            const badgeType = template.badgeType || (isUserTemplate ? (template.status === 'published' ? 'success' : 'pending') : 'info');
+            const builderLabel = isUserTemplate ? 'تعديل القالب' : 'تخصيص القالب';
+            const templateIdAttr = template.id || `template-${Date.now()}`;
+            const tagsMarkup = tagsList.map(tag => `<span>${tag}</span>`).join('');
+
+            return `
+                <div class="template-card" data-category="${category}" data-source="${source}">
+                    <header>
+                        <div>
+                            <h3>${displayTitle}</h3>
+                            <p class="template-meta">${description}</p>
+                        </div>
+                        <span class="status-badge ${badgeType}">
+                            <i class="fas fa-star"></i>
+                            ${badgeLabel}
+                        </span>
+                    </header>
+                    <div class="template-tags">
+                        ${tagsMarkup}
+                    </div>
+                    <div class="template-actions">
+                        <button type="button" class="btn btn-secondary"
+                            data-template-preview="${displayTitle}"
+                            data-template-id="${escapeAttribute(templateIdAttr)}"
+                            data-template-category="${category}"
+                            data-template-source="${source}">
+                            <i class="fas fa-eye"></i>
+                            معاينة
+                        </button>
+                        <button type="button" class="btn btn-primary"
+                            onclick="createDocumentFromTemplate('${category}', '${safeTitle}', '${escapeAttribute(templateIdAttr)}', '${source}')">
+                            <i class="fas fa-magic"></i>
+                            استخدام القالب
+                        </button>
+                        <button type="button" class="btn btn-outline"
+                            data-template-builder
+                            data-template-id="${escapeAttribute(templateIdAttr)}"
+                            data-template-category="${category}"
+                            data-template-title="${dataTitle}"
+                            data-template-source="${source}"
+                            data-template-mode="${isUserTemplate ? 'edit' : 'create'}">
+                            <i class="fas fa-pen"></i>
+                            ${builderLabel}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
         const documentRecords = [
             { number: 'QUO-2025-001', client: 'شركة البناء والتعمير', type: 'quotation', amount: 45000, status: 'draft', date: '15 يناير 2025' },
             { number: 'INV-2025-012', client: 'مؤسسة النجاح للتجارة', type: 'invoice', amount: 128500, status: 'sent', date: '14 يناير 2025' },
@@ -2172,6 +2530,42 @@
             'create-proposal': () => buildCreateDocumentPage('proposal')
         };
 
+        function updateUrlForPage(pageName) {
+            const url = new URL(window.location.href);
+            if (!pageName || pageName === 'dashboard') {
+                url.searchParams.delete('page');
+            } else {
+                url.searchParams.set('page', pageName);
+            }
+            window.history.replaceState({}, '', url);
+        }
+
+        function getInitialPageFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const requestedPage = params.get('page');
+            if (requestedPage && (pageBuilders[requestedPage] || requestedPage === 'dashboard')) {
+                return requestedPage;
+            }
+            return 'dashboard';
+        }
+
+        function navigateToPage(pageName) {
+            if (pageName && pageName.startsWith('create-')) {
+                const docType = pageName.replace('create-', '') || 'quotation';
+                openDocumentWorkspace(docType);
+                return;
+            }
+            activePage = pageName || 'dashboard';
+            updateUrlForPage(pageName);
+            setActiveNavByPage(pageName);
+            renderPage(pageName);
+        }
+
+        function navigateToInitialPage() {
+            const initialPage = getInitialPageFromUrl();
+            navigateToPage(initialPage);
+        }
+
         // التهيئة
         document.addEventListener('DOMContentLoaded', () => {
             pageContentElement = document.getElementById('pageContent');
@@ -2186,6 +2580,7 @@
             await loadAppConfig();
             await checkAuth();
             initializeAnimations();
+            navigateToInitialPage();
         }
 
         // وظائف المصادقة
@@ -2481,7 +2876,7 @@
                 return;
             }
 
-            if (token.startsWith('demo-token-') && storedUserRaw) {
+            if (token.startsWith(DEMO_TOKEN_PREFIX) && storedUserRaw) {
                 try {
                     const storedUser = JSON.parse(storedUserRaw);
                     currentUser = normalizeUser(storedUser);
@@ -2570,7 +2965,7 @@
                 ? 'تم تسجيل الدخول في الوضع التجريبي لعدم توفر الخادم حالياً.'
                 : 'تم تسجيل الدخول في الوضع التجريبي بسبب مشكلة في الاتصال.';
 
-            finalizeLoginSession(demoUser, `demo-token-${Date.now()}`, reasonMessage, 'info');
+            finalizeLoginSession(demoUser, `${DEMO_TOKEN_PREFIX}${Date.now()}`, reasonMessage, 'info');
             return true;
         }
 
@@ -2584,6 +2979,7 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('dashboardScreen').classList.add('active');
             updateUserInfo();
+            syncCustomTemplatesFromServer(true);
         }
 
         function showLogin() {
@@ -2811,6 +3207,10 @@
             }
             if (!pageContentElement) return;
 
+            if (pageKey) {
+                activePage = pageKey;
+            }
+
             let markup = '';
             if (pageKey === 'dashboard') {
                 markup = pageTemplates.dashboard || '';
@@ -2869,6 +3269,7 @@
         }
 
         function initializeTemplatesPage() {
+            syncCustomTemplatesFromServer(true);
             const filterButtons = document.querySelectorAll('[data-template-filter]');
             const cards = document.querySelectorAll('.template-card');
             const activateFilter = (filter) => {
@@ -2888,10 +3289,134 @@
 
             document.querySelectorAll('[data-template-preview]').forEach(button => {
                 button.addEventListener('click', () => {
-                    const templateName = button.dataset.templatePreview;
-                    showNotification(`تم فتح معاينة قالب ${templateName}`, 'info');
+                    openTemplatePreview({
+                        id: button.dataset.templateId,
+                        title: button.dataset.templatePreview,
+                        category: button.dataset.templateCategory,
+                        source: button.dataset.templateSource
+                    });
                 });
             });
+
+            document.querySelectorAll('[data-template-builder]').forEach(button => {
+                button.addEventListener('click', () => {
+                    openTemplateBuilder({
+                        id: button.dataset.templateId,
+                        title: button.dataset.templateTitle,
+                        category: button.dataset.templateCategory,
+                        source: button.dataset.templateSource,
+                        mode: button.dataset.templateMode
+                    });
+                });
+            });
+
+            const applyButton = document.getElementById('applyTemplateFromPreview');
+            if (applyButton) {
+                applyButton.disabled = true;
+                applyButton.addEventListener('click', () => {
+                    if (previewTemplateState) {
+                        createDocumentFromTemplate(
+                            previewTemplateState.category,
+                            previewTemplateState.title,
+                            previewTemplateState.id,
+                            previewTemplateState.source
+                        );
+                        closeTemplatePreview();
+                    }
+                });
+            }
+
+            const modal = document.getElementById('templatePreviewModal');
+            if (modal) {
+                modal.addEventListener('click', (event) => {
+                    if (event.target === modal) {
+                        closeTemplatePreview();
+                    }
+                });
+            }
+
+            document.querySelectorAll('[data-close-template-preview]').forEach(button => {
+                button.addEventListener('click', closeTemplatePreview);
+            });
+        }
+
+        function openTemplatePreview({ id, title, category, source = 'default' } = {}) {
+            const modal = document.getElementById('templatePreviewModal');
+            const body = document.getElementById('templatePreviewBody');
+            const titleElement = document.getElementById('templatePreviewTitle');
+            if (!modal || !body || !titleElement) {
+                return;
+            }
+
+            body.innerHTML = getTemplatePreviewContent({ id, source, title });
+            titleElement.textContent = title || 'معاينة القالب';
+            modal.classList.add('open');
+            previewTemplateState = {
+                id,
+                title: title || 'قالب مخصص',
+                category: category || 'quotation',
+                source
+            };
+            const applyButton = document.getElementById('applyTemplateFromPreview');
+            if (applyButton) {
+                applyButton.disabled = false;
+            }
+        }
+
+        function getTemplatePreviewContent({ id, source = 'default', title }) {
+            if (source === 'custom') {
+                const template = getCustomTemplates().find(item => item.id === id);
+                if (template?.html) {
+                    return template.html;
+                }
+            }
+
+            const templateMeta = templateCatalog.find(item => item.id === id);
+            const description = templateMeta?.description || 'قالب جاهز للاستخدام. قم بفتحه في منشئ القوالب للتخصيص.';
+            const tags = (templateMeta?.tags || ['قالب جاهز']).map(tag => `<span>${tag}</span>`).join('');
+            const heading = title || templateMeta?.title || 'قالب جاهز';
+
+            return `
+                <div class="template-preview-placeholder">
+                    <h3>${heading}</h3>
+                    <p>${description}</p>
+                    <div class="template-preview-tags">${tags}</div>
+                    <p class="template-preview-note">قم باستخدام زر "تخصيص القالب" لإنشاء نسخة مخصصة من هذا القالب.</p>
+                </div>
+            `;
+        }
+
+        function closeTemplatePreview() {
+            const modal = document.getElementById('templatePreviewModal');
+            if (modal) {
+                modal.classList.remove('open');
+            }
+            const applyButton = document.getElementById('applyTemplateFromPreview');
+            if (applyButton) {
+                applyButton.disabled = true;
+            }
+            previewTemplateState = null;
+        }
+
+        function openTemplateBuilder({ id, title, category, source = 'custom', mode = 'edit' } = {}) {
+            const params = new URLSearchParams();
+            if (id) {
+                params.set('templateId', id);
+            }
+            if (title) {
+                params.set('title', title);
+            }
+            if (category) {
+                params.set('category', category);
+            }
+            if (mode) {
+                params.set('mode', mode);
+            }
+            if (source) {
+                params.set('source', source);
+            }
+            params.set('return', 'templates');
+            window.location.href = `arabic_template_editor.html?${params.toString()}`;
         }
 
         function initializeDocumentsPage() {
@@ -3016,33 +3541,32 @@
 
         // قوالب الصفحات
         function buildTemplatesPage() {
-            const templateCards = templateCatalog.map(template => `
-                <div class="template-card" data-category="${template.category}">
-                    <header>
-                        <div>
-                            <h3>${template.title}</h3>
-                            <p class="template-meta">${template.description}</p>
-                        </div>
-                        <span class="status-badge ${template.badgeType}">
-                            <i class="fas fa-star"></i>
-                            ${template.badge}
-                        </span>
-                    </header>
-                    <div class="template-tags">
-                        ${template.tags.map(tag => `<span>${tag}</span>`).join('')}
-                    </div>
-                    <div class="template-actions">
-                        <button type="button" class="btn btn-secondary" data-template-preview="${template.title}">
-                            <i class="fas fa-eye"></i>
-                            معاينة
+            const customTemplates = getCustomTemplates();
+            const builtInCards = templateCatalog.map(template => buildTemplateCard(template, { source: 'default' })).join('');
+            const customCards = customTemplates.map(template => buildTemplateCard(template, { source: template.source || 'custom' })).join('');
+            const syncingNotice = templateState.syncing
+                ? `<div style="padding: 12px 16px; margin-bottom: 16px; border-radius: 12px; background: rgba(14, 165, 233, 0.08); color: var(--text-secondary); display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                        <i class="fas fa-cloud-upload-alt" style="color: var(--primary-color);"></i>
+                        <span>جاري مزامنة القوالب المخصصة مع الخادم...</span>
+                    </div>`
+                : '';
+            const customSection = customCards
+                ? `<div class="templates-grid">${customCards}</div>`
+                : `
+                    <div class="template-empty-state">
+                        <h4>لا توجد قوالب مخصصة بعد</h4>
+                        <p>ابدأ بإنشاء قالبك الأول عبر منشئ القوالب المتقدم.</p>
+                        <button class="btn btn-primary" type="button"
+                            data-template-builder
+                            data-template-mode="create"
+                            data-template-title="قالب مخصص جديد"
+                            data-template-category="quotation"
+                            data-template-source="custom">
+                            <i class="fas fa-plus"></i>
+                            إنشاء قالب جديد
                         </button>
-                        <button type="button" class="btn btn-primary" onclick="createDocumentFromTemplate('${template.category}', '${template.title}')">
-                            <i class="fas fa-magic"></i>
-                            استخدام القالب
-                        </button>
                     </div>
-                </div>
-            `).join('');
+                `;
 
             return `
                 <div class="page-section">
@@ -3056,6 +3580,28 @@
                             تحديث القوالب
                         </button>
                     </div>
+                    <div class="template-builder-actions">
+                        <div>
+                            <strong>منشئ القوالب المتقدم</strong>
+                            <p>أنشئ قوالب عربية مخصصة متوافقة مع عروض الأسعار والفواتير.</p>
+                        </div>
+                        <div class="builder-actions">
+                            <button class="btn btn-primary" type="button"
+                                data-template-builder
+                                data-template-mode="create"
+                                data-template-title="قالب مخصص جديد"
+                                data-template-category="quotation"
+                                data-template-source="custom">
+                                <i class="fas fa-plus-circle"></i>
+                                إنشاء قالب مخصص
+                            </button>
+                            <button class="btn btn-outline" type="button" onclick="showNotification('قريباً: إدارة مكتبة القوالب المشتركة', 'info')">
+                                <i class="fas fa-folder-open"></i>
+                                إدارة القوالب
+                            </button>
+                        </div>
+                    </div>
+                    ${syncingNotice}
                     <div class="filter-group">
                         <button class="pill-button" data-template-filter="all">الكل</button>
                         <button class="pill-button" data-template-filter="quotation">عروض الأسعار</button>
@@ -3064,7 +3610,51 @@
                         <button class="pill-button" data-template-filter="contract">العقود</button>
                     </div>
                     <div class="templates-grid">
-                        ${templateCards}
+                        ${builtInCards}
+                    </div>
+                </div>
+                <div class="page-section">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title">قوالبك المخصصة</h2>
+                            <p class="section-subtitle">كل القوالب التي تم إنشاؤها أو تعديلها عبر منشئ القوالب.</p>
+                        </div>
+                        <button class="btn btn-primary" type="button"
+                            data-template-builder
+                            data-template-mode="create"
+                            data-template-title="قالب مخصص جديد"
+                            data-template-category="quotation"
+                            data-template-source="custom">
+                            <i class="fas fa-plus"></i>
+                            قالب جديد
+                        </button>
+                    </div>
+                    ${customSection}
+                </div>
+                ${buildTemplatePreviewModal()}
+            `;
+        }
+
+        function buildTemplatePreviewModal() {
+            return `
+                <div class="template-preview-modal" id="templatePreviewModal">
+                    <div class="template-preview-dialog">
+                        <div class="template-preview-header">
+                            <h3 id="templatePreviewTitle">معاينة القالب</h3>
+                            <button type="button" class="modal-close-btn" data-close-template-preview>
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="template-preview-body" id="templatePreviewBody"></div>
+                        <div class="template-preview-footer">
+                            <div style="display: flex; gap: 12px;">
+                                <button type="button" class="btn btn-secondary" data-close-template-preview>إغلاق</button>
+                                <button type="button" class="btn btn-primary" id="applyTemplateFromPreview" disabled>
+                                    <i class="fas fa-check"></i>
+                                    استخدام القالب
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -3587,92 +4177,87 @@
         // وظائف الصفحات
         function showDashboard(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('dashboard');
-            renderPage('dashboard');
+            navigateToPage('dashboard');
         }
 
         function showTemplates(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('templates');
-            renderPage('templates');
+            navigateToPage('templates');
         }
 
         function showDocuments(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('documents');
-            renderPage('documents');
+            navigateToPage('documents');
         }
 
         function showClients(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('clients');
-            renderPage('clients');
+            navigateToPage('clients');
         }
 
         function createQuotation(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('create-quotation');
-            renderPage('create-quotation');
+            openDocumentWorkspace('quotation');
         }
 
         function createInvoice(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('create-invoice');
-            renderPage('create-invoice');
+            openDocumentWorkspace('invoice');
         }
 
         function createProposal(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('create-proposal');
-            renderPage('create-proposal');
+            openDocumentWorkspace('proposal');
         }
 
-        function createDocumentFromTemplate(category, templateTitle) {
-            const handlers = {
-                quotation: createQuotation,
-                invoice: createInvoice,
-                proposal: createProposal,
-                contract: createProposal
-            };
-            const handler = handlers[category] || createQuotation;
-            handler();
-            showNotification(`تم تطبيق قالب ${templateTitle} على مستند جديد`, 'success');
+        function openDocumentWorkspace(docType = 'quotation', templateId = '', templateTitle = '', source = '') {
+            const params = new URLSearchParams();
+            params.set('type', docType || 'quotation');
+            if (templateTitle) {
+                params.set('title', templateTitle);
+            }
+            if (templateId) {
+                params.set('templateId', templateId);
+            }
+            if (source) {
+                params.set('source', source);
+            }
+            params.set('return', activePage || 'dashboard');
+            window.location.href = `document_workspace.html?${params.toString()}`;
+        }
+
+        function createDocumentFromTemplate(category, templateTitle, templateId = '', source = 'default') {
+            openDocumentWorkspace(category || 'quotation', templateId, templateTitle, source);
         }
 
         function showCompanySettings(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('company-settings');
-            renderPage('company-settings');
+            navigateToPage('company-settings');
         }
 
         function showBranding(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('branding');
-            renderPage('branding');
+            navigateToPage('branding');
         }
 
         function showProfile(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('profile');
-            renderPage('profile');
+            navigateToPage('profile');
         }
 
         function showBilling(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('billing');
-            renderPage('billing');
+            navigateToPage('billing');
         }
 
         function showHelp(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('help');
-            renderPage('help');
+            navigateToPage('help');
         }
 
         function showReports(event) {
             if (event) event.preventDefault();
-            setActiveNavByPage('reports');
-            renderPage('reports');
+            navigateToPage('reports');
         }
 
         function showSettings(event) {

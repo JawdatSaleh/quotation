@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مساحة تحرير المستندات</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --secondary: #0891b2;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --success: #059669;
+            --warning: #d97706;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--background);
+            font-family: 'Cairo', sans-serif;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .workspace-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .workspace-header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .workspace-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            font-family: 'Cairo', sans-serif;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            box-shadow: 0 8px 16px rgba(30, 64, 175, 0.25);
+        }
+
+        .btn-outline {
+            border: 2px solid var(--border);
+            background: transparent;
+            color: var(--text);
+        }
+
+        .btn-soft {
+            background: rgba(14, 165, 233, 0.12);
+            color: var(--secondary);
+        }
+
+        .workspace-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 32px 40px;
+            gap: 20px;
+        }
+
+        .template-toolbar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .template-toolbar label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .template-toolbar select {
+            min-width: 260px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            font-family: 'Cairo', sans-serif;
+            font-size: 15px;
+        }
+
+        .document-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        .side-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            position: sticky;
+            top: 24px;
+        }
+
+        .side-panel h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+        }
+
+        .document-canvas {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            min-height: calc(100vh - 240px);
+            box-shadow: 0 15px 35px rgba(15, 23, 42, 0.06);
+        }
+
+        #editorCanvas {
+            min-height: 70vh;
+            outline: none;
+            line-height: 1.9;
+        }
+
+        .doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .doc-header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .doc-meta div {
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .doc-section {
+            margin-bottom: 24px;
+        }
+
+        .doc-section h2 {
+            margin: 0 0 8px;
+            font-size: 18px;
+        }
+
+        .doc-section p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        #editorCanvas table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 18px;
+        }
+
+        #editorCanvas table th,
+        #editorCanvas table td {
+            border: 1px solid var(--border);
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .toast {
+            position: fixed;
+            left: 24px;
+            bottom: 24px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            color: #fff;
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+            animation: slideUp 0.4s ease;
+            z-index: 9999;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 1024px) {
+            .document-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .side-panel {
+                position: static;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .workspace-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .template-toolbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .workspace-actions {
+                width: 100%;
+            }
+
+            .workspace-actions button {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="workspace-header">
+        <div>
+            <h1 id="workspaceTitle">محرر المستندات</h1>
+            <div class="header-meta" id="workspaceMeta"></div>
+        </div>
+        <div class="workspace-actions">
+            <button class="btn-outline" type="button" id="backButton">
+                <i class="fas fa-arrow-right"></i>
+                العودة للوحة التحكم
+            </button>
+            <button class="btn-soft" type="button" id="openBuilderButton">
+                <i class="fas fa-pen"></i>
+                تخصيص في منشئ القوالب
+            </button>
+            <button class="btn-primary" type="button" id="exportButton">
+                <i class="fas fa-file-export"></i>
+                تصدير / طباعة
+            </button>
+        </div>
+    </header>
+
+    <main class="workspace-body">
+        <section class="template-toolbar">
+            <div>
+                <label for="templateSelector">اختيار القالب</label>
+                <select id="templateSelector"></select>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-outline" type="button" id="saveDraftButton">
+                    <i class="fas fa-save"></i>
+                    حفظ المسودة
+                </button>
+                <button class="btn-primary" type="button" id="sendButton">
+                    <i class="fas fa-paper-plane"></i>
+                    حفظ وإرسال
+                </button>
+            </div>
+        </section>
+
+        <section class="document-layout">
+            <aside class="side-panel">
+                <h3>بيانات المستند</h3>
+                <form id="metaForm">
+                    <div class="form-group">
+                        <label for="documentTitleInput">عنوان المستند</label>
+                        <input type="text" id="documentTitleInput" name="documentTitle" data-meta-input placeholder="مثال: عرض سعر مشروع أبراج الرياض">
+                    </div>
+                    <div class="form-group">
+                        <label for="clientNameInput">اسم العميل</label>
+                        <input type="text" id="clientNameInput" name="clientName" data-meta-input placeholder="شركة البناء والتطوير">
+                    </div>
+                    <div class="form-group">
+                        <label for="documentDateInput">تاريخ الإصدار</label>
+                        <input type="date" id="documentDateInput" name="documentDate" data-meta-input>
+                    </div>
+                    <div class="form-group">
+                        <label for="dueDateInput">تاريخ الانتهاء</label>
+                        <input type="date" id="dueDateInput" name="dueDate" data-meta-input>
+                    </div>
+                    <div class="form-group">
+                        <label for="notesInput">ملاحظات أو شروط</label>
+                        <textarea id="notesInput" name="notes" data-meta-input rows="4" placeholder="اكتب هنا أي شروط أو تفاصيل إضافية..."></textarea>
+                    </div>
+                </form>
+            </aside>
+
+            <section class="document-canvas">
+                <div id="editorCanvas" contenteditable="true" spellcheck="false"></div>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        const TEMPLATE_STORAGE_KEY = 'customTemplates';
+        const TEMPLATE_API_ENDPOINT = '/api/templates';
+        const DEMO_TOKEN_PREFIX = 'demo-token-';
+        const DEFAULT_TEMPLATES = [
+            {
+                id: 'quotation-classic',
+                title: 'عرض سعر كلاسيكي',
+                category: 'quotation',
+                source: 'default',
+                html: `
+                    <div class="doc-header">
+                        <div>
+                            <h1>عرض سعر رسمي</h1>
+                            <p data-merge="documentTitle">عنوان العرض</p>
+                        </div>
+                        <div class="doc-meta">
+                            <div><strong>التاريخ:</strong> <span data-merge="documentDate">—</span></div>
+                            <div><strong>العميل:</strong> <span data-merge="clientName">—</span></div>
+                        </div>
+                    </div>
+                    <div class="doc-section">
+                        <h2>تفاصيل المشروع</h2>
+                        <p contenteditable="true">اكتب وصفاً موجزاً للمشروع ومتطلباته الأساسية.</p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>م</th>
+                                <th>الوصف</th>
+                                <th>الكمية</th>
+                                <th>سعر الوحدة</th>
+                                <th>الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td contenteditable="true">البند الأول</td>
+                                <td contenteditable="true">1</td>
+                                <td contenteditable="true">0.00</td>
+                                <td contenteditable="true">0.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="doc-section">
+                        <h2>الشروط والأحكام</h2>
+                        <p data-merge="notes">سيتم إدراج الشروط هنا.</p>
+                    </div>
+                `
+            },
+            {
+                id: 'invoice-clean',
+                title: 'فاتورة نظيفة',
+                category: 'invoice',
+                source: 'default',
+                html: `
+                    <div class="doc-header">
+                        <div>
+                            <h1>فاتورة</h1>
+                            <p>مرجع المستند: <span data-merge="documentTitle">—</span></p>
+                        </div>
+                        <div class="doc-meta">
+                            <div><strong>التاريخ:</strong> <span data-merge="documentDate">—</span></div>
+                            <div><strong>تاريخ الاستحقاق:</strong> <span data-merge="dueDate">—</span></div>
+                            <div><strong>العميل:</strong> <span data-merge="clientName">—</span></div>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الوصف</th>
+                                <th>الكمية</th>
+                                <th>سعر الوحدة</th>
+                                <th>الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td contenteditable="true">عنصر الفاتورة</td>
+                                <td contenteditable="true">1</td>
+                                <td contenteditable="true">0.00</td>
+                                <td contenteditable="true">0.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="doc-section" style="text-align: left;">
+                        <p>المجموع: _____________</p>
+                        <p>الضريبة (15%): _____________</p>
+                        <p>الإجمالي: _____________</p>
+                    </div>
+                    <div class="doc-section">
+                        <h2>ملاحظات</h2>
+                        <p data-merge="notes">شكراً لتعاملكم معنا.</p>
+                    </div>
+                `
+            }
+        ];
+
+        let docType = 'quotation';
+        let templatesCatalog = [];
+        let currentTemplate = null;
+        let returnPage = 'dashboard';
+
+        document.addEventListener('DOMContentLoaded', initializeWorkspace);
+
+        async function initializeWorkspace() {
+            const params = new URLSearchParams(window.location.search);
+            docType = params.get('type') || 'quotation';
+            const requestedTemplateId = params.get('templateId');
+            const requestedSource = params.get('source') || 'default';
+            returnPage = params.get('return') || 'dashboard';
+            const presetTitle = params.get('title');
+
+            setupHeader();
+            const titleInput = document.getElementById('documentTitleInput');
+            if (titleInput && presetTitle) {
+                titleInput.value = presetTitle;
+            }
+            const dateInput = document.getElementById('documentDateInput');
+            if (dateInput && !dateInput.value) {
+                dateInput.valueAsDate = new Date();
+            }
+
+            templatesCatalog = await loadAvailableTemplates(docType, requestedTemplateId, requestedSource);
+            populateTemplateSelector(requestedTemplateId);
+            bindEvents();
+
+            const initialTemplateId = requestedTemplateId || (templatesCatalog[0]?.id ?? '');
+            if (initialTemplateId) {
+                applyTemplateById(initialTemplateId);
+                const selector = document.getElementById('templateSelector');
+                if (selector) {
+                    selector.value = initialTemplateId;
+                }
+            }
+            applyMetadataToCanvas();
+        }
+
+        function setupHeader() {
+            const titleMap = {
+                quotation: 'محرر عروض الأسعار',
+                invoice: 'محرر الفواتير',
+                proposal: 'محرر المقترحات'
+            };
+            const titleElement = document.getElementById('workspaceTitle');
+            const metaElement = document.getElementById('workspaceMeta');
+            if (titleElement) {
+                titleElement.textContent = titleMap[docType] || 'محرر المستندات';
+            }
+            if (metaElement) {
+                const now = new Date();
+                metaElement.innerHTML = `
+                    <span><i class="fas fa-clock"></i> ${new Intl.DateTimeFormat('ar-SA', { dateStyle: 'medium' }).format(now)}</span>
+                    <span><i class="fas fa-layer-group"></i> ${docType === 'invoice' ? 'فاتورة' : docType === 'proposal' ? 'مقترح' : 'عرض سعر'}</span>
+                `;
+            }
+        }
+
+        async function loadAvailableTemplates(type, requestedTemplateId, requestedSource) {
+            const defaults = DEFAULT_TEMPLATES
+                .filter(t => t.category === type)
+                .map(template => ({ ...template }));
+            let serverTemplates = await fetchServerTemplates();
+            if (requestedSource === 'server' && requestedTemplateId && !serverTemplates.find(t => t.id === requestedTemplateId)) {
+                const fallback = await fetchTemplateById(requestedTemplateId);
+                if (fallback) {
+                    serverTemplates.push(fallback);
+                }
+            }
+            serverTemplates = serverTemplates
+                .filter(template => (template.category || 'quotation') === type)
+                .map(template => ({ ...template, source: 'server' }));
+            const combined = [...defaults, ...serverTemplates];
+            if (!combined.length) {
+                combined.push({
+                    id: `blank-${type}`,
+                    title: 'قالب فارغ',
+                    category: type,
+                    source: 'default',
+                    html: buildFallbackTemplate('قالب فارغ')
+                });
+            }
+            return combined;
+        }
+
+        async function fetchServerTemplates() {
+            const token = getAuthToken();
+            if (!token) {
+                return loadTemplatesFromLocal();
+            }
+            try {
+                const response = await fetch('/api/templates?limit=100', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('failed');
+                }
+                const data = await response.json();
+                return (data.templates || []).map(normalizeServerTemplate).filter(Boolean);
+            } catch (error) {
+                console.warn('تعذر تحميل القوالب من الخادم:', error);
+                return loadTemplatesFromLocal();
+            }
+        }
+
+        async function fetchTemplateById(id) {
+            const token = getAuthToken();
+            if (!token) {
+                return loadTemplatesFromLocal().find(template => template.id === id) || null;
+            }
+            try {
+                const response = await fetch(`${TEMPLATE_API_ENDPOINT}/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    return null;
+                }
+                const data = await response.json();
+                return data?.template ? normalizeServerTemplate(data.template) : null;
+            } catch (error) {
+                console.warn('فشل تحميل القالب المحدد:', error);
+                return null;
+            }
+        }
+
+        function normalizeServerTemplate(template) {
+            if (!template) return null;
+            return {
+                id: template._id || template.id,
+                title: template.name || template.title || 'قالب محفوظ',
+                category: template.type || template.category || 'quotation',
+                html: template.html || '',
+                source: 'server'
+            };
+        }
+
+        function loadTemplatesFromLocal() {
+            if (typeof localStorage === 'undefined') {
+                return [];
+            }
+            try {
+                const stored = localStorage.getItem(TEMPLATE_STORAGE_KEY);
+                const parsed = stored ? JSON.parse(stored) : [];
+                return parsed.map(template => ({ ...template, source: template.source || 'custom' }));
+            } catch (error) {
+                console.warn('تعذر قراءة القوالب من التخزين المحلي:', error);
+                return [];
+            }
+        }
+
+        function getAuthToken() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token || token.startsWith(DEMO_TOKEN_PREFIX)) {
+                    return null;
+                }
+                return token;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function populateTemplateSelector(initialId) {
+            const selector = document.getElementById('templateSelector');
+            if (!selector) return;
+            selector.innerHTML = '';
+
+            const defaults = templatesCatalog.filter(template => template.source === 'default');
+            const saved = templatesCatalog.filter(template => template.source !== 'default');
+
+            if (defaults.length) {
+                const group = document.createElement('optgroup');
+                group.label = 'قوالب مدمجة';
+                defaults.forEach(template => {
+                    const option = document.createElement('option');
+                    option.value = template.id;
+                    option.textContent = template.title;
+                    group.appendChild(option);
+                });
+                selector.appendChild(group);
+            }
+
+            if (saved.length) {
+                const group = document.createElement('optgroup');
+                group.label = 'قوالبك المحفوظة';
+                saved.forEach(template => {
+                    const option = document.createElement('option');
+                    option.value = template.id;
+                    option.textContent = template.title;
+                    group.appendChild(option);
+                });
+                selector.appendChild(group);
+            }
+
+            selector.addEventListener('change', () => {
+                applyTemplateById(selector.value);
+            });
+
+            if (initialId) {
+                selector.value = initialId;
+            }
+        }
+
+        function applyTemplateById(templateId) {
+            const canvas = document.getElementById('editorCanvas');
+            if (!canvas) return;
+            const template = templatesCatalog.find(item => item.id === templateId) || templatesCatalog[0];
+            if (!template) {
+                canvas.innerHTML = buildFallbackTemplate();
+                return;
+            }
+            currentTemplate = template;
+            canvas.innerHTML = template.html || buildFallbackTemplate(template.title);
+            applyMetadataToCanvas();
+        }
+
+        function buildFallbackTemplate(title = 'مستند مخصص') {
+            return `
+                <div class="doc-header">
+                    <div>
+                        <h1>${title}</h1>
+                        <p data-merge="documentTitle">عنوان المستند</p>
+                    </div>
+                    <div class="doc-meta">
+                        <div><strong>التاريخ:</strong> <span data-merge="documentDate">—</span></div>
+                        <div><strong>العميل:</strong> <span data-merge="clientName">—</span></div>
+                    </div>
+                </div>
+                <div class="doc-section">
+                    <p contenteditable="true">ابدأ بالكتابة هنا...</p>
+                </div>
+            `;
+        }
+
+        function bindEvents() {
+            document.getElementById('saveDraftButton')?.addEventListener('click', () => handleSaveDocument('draft'));
+            document.getElementById('sendButton')?.addEventListener('click', () => handleSaveDocument('final'));
+            document.getElementById('exportButton')?.addEventListener('click', handleExport);
+            document.getElementById('openBuilderButton')?.addEventListener('click', openBuilderFromWorkspace);
+            document.getElementById('backButton')?.addEventListener('click', () => {
+                if (returnPage && returnPage !== 'dashboard') {
+                    window.location.href = `index.html?page=${returnPage}`;
+                } else {
+                    window.location.href = 'index.html';
+                }
+            });
+
+            document.querySelectorAll('[data-meta-input]').forEach(input => {
+                input.addEventListener('input', applyMetadataToCanvas);
+            });
+        }
+
+        function getDocumentMeta() {
+            const form = document.getElementById('metaForm');
+            if (!form) return {};
+            const formData = new FormData(form);
+            return Object.fromEntries(formData.entries());
+        }
+
+        function applyMetadataToCanvas() {
+            const canvas = document.getElementById('editorCanvas');
+            if (!canvas) return;
+            const meta = getDocumentMeta();
+            const bindings = ['documentTitle', 'clientName', 'documentDate', 'dueDate', 'notes'];
+            bindings.forEach(key => {
+                canvas.querySelectorAll(`[data-merge="${key}"]`).forEach(node => {
+                    node.textContent = meta[key] || '—';
+                });
+                if (meta[key]) {
+                    const placeholder = `{{${key}}}`;
+                    if (canvas.innerHTML.includes(placeholder)) {
+                        canvas.innerHTML = canvas.innerHTML.split(placeholder).join(meta[key]);
+                    }
+                }
+            });
+        }
+
+        function handleSaveDocument(status) {
+            const meta = getDocumentMeta();
+            const canvas = document.getElementById('editorCanvas');
+            if (!canvas || !canvas.textContent.trim()) {
+                showToast('الرجاء إضافة محتوى قبل الحفظ', 'warning');
+                return;
+            }
+            const label = status === 'final' ? 'تم حفظ المستند وإعداده للإرسال' : 'تم حفظ المستند كمسودة';
+            showToast(label, 'success');
+            console.log('Document payload', {
+                status,
+                meta,
+                template: currentTemplate?.id || null,
+                html: canvas.innerHTML
+            });
+        }
+
+        function handleExport() {
+            window.print();
+        }
+
+        function openBuilderFromWorkspace() {
+            const template = currentTemplate;
+            const params = new URLSearchParams();
+            params.set('category', docType);
+            params.set('return', 'document-workspace');
+            if (template?.id && template.source !== 'default') {
+                params.set('templateId', template.id);
+                params.set('source', template.source);
+                params.set('mode', 'edit');
+            } else {
+                params.set('title', template?.title || 'قالب جديد');
+                params.set('source', 'custom');
+                params.set('mode', 'create');
+            }
+            window.location.href = `arabic_template_editor.html?${params.toString()}`;
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            const colors = {
+                success: 'var(--success)',
+                warning: 'var(--warning)',
+                info: 'var(--secondary)'
+            };
+            toast.style.background = colors[type] || colors.info;
+            toast.innerHTML = `<i class="fas fa-info-circle"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
