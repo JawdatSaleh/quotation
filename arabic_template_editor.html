@@ -89,6 +89,23 @@
             width: 300px;
         }
 
+        .template-category-select {
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-family: 'Cairo', sans-serif;
+            background: white;
+            cursor: pointer;
+            min-width: 170px;
+        }
+
+        .template-category-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
         .toolbar-title input:hover {
             background: var(--gray-100);
         }
@@ -661,6 +678,12 @@
             </button>
             <div class="toolbar-title">
                 <input type="text" value="قالب عرض سعر البناء" id="templateName">
+                <select id="templateCategory" class="template-category-select">
+                    <option value="quotation" selected>عرض سعر</option>
+                    <option value="invoice">فاتورة</option>
+                    <option value="proposal">مقترح</option>
+                    <option value="contract">عقد</option>
+                </select>
             </div>
         </div>
         <div class="toolbar-actions">
@@ -913,9 +936,14 @@
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
         // إدارة الحالة
+        const TEMPLATE_STORAGE_KEY = 'customTemplates';
         let draggedElement = null;
         let currentTemplate = {
+            id: null,
+            source: 'custom',
+            baseTemplateId: null,
             name: 'قالب عرض سعر البناء',
+            category: 'quotation',
             sections: [],
             settings: {
                 bgColor: '#ffffff',
@@ -927,13 +955,130 @@
                 currency: 'SAR'
             }
         };
+        let returnPage = 'templates';
+        let initialMessageDisplayed = false;
 
         // التهيئة
         document.addEventListener('DOMContentLoaded', () => {
+            hydrateTemplateFromQuery();
             initializeDragDrop();
             initializeColorPickers();
-            showNotification('مرحباً! ابدأ بسحب المكونات إلى اللوحة', 'info');
+            if (!initialMessageDisplayed) {
+                showNotification('مرحباً! ابدأ بسحب المكونات إلى اللوحة', 'info');
+                initialMessageDisplayed = true;
+            }
         });
+
+        function hydrateTemplateFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            returnPage = params.get('return') || 'templates';
+            currentTemplate.source = params.get('source') || 'custom';
+            currentTemplate.baseTemplateId = params.get('templateId') || null;
+
+            const providedTitle = params.get('title');
+            const providedCategory = params.get('category');
+            const mode = params.get('mode') || 'edit';
+
+            const templateNameInput = document.getElementById('templateName');
+            if (providedTitle && templateNameInput) {
+                templateNameInput.value = providedTitle;
+                currentTemplate.name = providedTitle;
+            }
+
+            const categorySelect = document.getElementById('templateCategory');
+            if (categorySelect) {
+                categorySelect.value = providedCategory || categorySelect.value;
+                currentTemplate.category = categorySelect.value;
+            }
+
+            if (currentTemplate.source === 'custom' && currentTemplate.baseTemplateId) {
+                currentTemplate.id = currentTemplate.baseTemplateId;
+            } else {
+                currentTemplate.id = currentTemplate.id || `custom-${Date.now()}`;
+            }
+
+            if (currentTemplate.source === 'custom' && currentTemplate.baseTemplateId) {
+                const savedTemplate = getTemplateFromStorage(currentTemplate.baseTemplateId);
+                if (savedTemplate) {
+                    applyTemplateFromStorage(savedTemplate);
+                    initialMessageDisplayed = true;
+                    showNotification('تم تحميل القالب المحفوظ للتعديل', 'success');
+                    return;
+                }
+            }
+
+            if (mode === 'create' && !initialMessageDisplayed) {
+                showNotification('ابدأ في إنشاء قالبك الجديد عبر سحب المكونات إلى اللوحة', 'info');
+                initialMessageDisplayed = true;
+            }
+        }
+
+        function loadSavedTemplates() {
+            if (typeof localStorage === 'undefined') {
+                return [];
+            }
+            try {
+                const stored = localStorage.getItem(TEMPLATE_STORAGE_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch (error) {
+                console.warn('تعذر قراءة القوالب المحفوظة:', error);
+                return [];
+            }
+        }
+
+        function getTemplateFromStorage(templateId) {
+            if (!templateId) return null;
+            return loadSavedTemplates().find(template => template.id === templateId) || null;
+        }
+
+        function applyTemplateFromStorage(template) {
+            const canvas = document.getElementById('documentCanvas');
+            if (!canvas) return;
+            canvas.innerHTML = template.html || canvas.innerHTML;
+
+            currentTemplate.id = template.id;
+            currentTemplate.name = template.title || currentTemplate.name;
+            currentTemplate.category = template.category || currentTemplate.category;
+
+            const templateNameInput = document.getElementById('templateName');
+            if (templateNameInput && template.title) {
+                templateNameInput.value = template.title;
+            }
+
+            const categorySelect = document.getElementById('templateCategory');
+            if (categorySelect && template.category) {
+                categorySelect.value = template.category;
+            }
+
+            if (template.settings) {
+                currentTemplate.settings = {
+                    ...currentTemplate.settings,
+                    ...template.settings
+                };
+                if (template.settings.bgColor) {
+                    const bgColorInput = document.getElementById('bgColor');
+                    if (bgColorInput) {
+                        bgColorInput.value = template.settings.bgColor;
+                        if (bgColorInput.nextElementSibling) {
+                            bgColorInput.nextElementSibling.value = template.settings.bgColor;
+                        }
+                    }
+                }
+                if (template.settings.primaryColor) {
+                    const primaryColorInput = document.getElementById('primaryColor');
+                    if (primaryColorInput) {
+                        primaryColorInput.value = template.settings.primaryColor;
+                        if (primaryColorInput.nextElementSibling) {
+                            primaryColorInput.nextElementSibling.value = template.settings.primaryColor;
+                        }
+                    }
+                }
+            }
+
+            updateDropZones();
+            initializeEditors();
+            applyTemplateSettings();
+        }
 
         // السحب والإفلات
         function initializeDragDrop() {
@@ -963,9 +1108,19 @@
 
         function updateDropZones() {
             const canvas = document.getElementById('documentCanvas');
-            const dropZones = canvas.querySelectorAll('.drop-zone');
-            
+            if (!canvas) return;
+
+            let dropZones = canvas.querySelectorAll('.drop-zone');
+            if (!dropZones.length) {
+                const newPosition = canvas.querySelectorAll('.template-section').length;
+                canvas.insertAdjacentHTML('beforeend', createDropZone(newPosition));
+                dropZones = canvas.querySelectorAll('.drop-zone');
+            }
+
             dropZones.forEach(zone => {
+                zone.removeEventListener('dragover', handleDragOver);
+                zone.removeEventListener('drop', handleDrop);
+                zone.removeEventListener('dragleave', handleDragLeave);
                 zone.addEventListener('dragover', handleDragOver);
                 zone.addEventListener('drop', handleDrop);
                 zone.addEventListener('dragleave', handleDragLeave);
@@ -986,7 +1141,7 @@
             e.currentTarget.classList.remove('drag-over');
             
             const componentType = e.dataTransfer.getData('component');
-            const position = parseInt(e.currentTarget.dataset.position);
+            const position = parseInt(e.currentTarget.dataset.position, 10) || 0;
             
             addComponent(componentType, position);
         }
@@ -1612,17 +1767,21 @@
 
         function applyTemplateSettings() {
             const documentCanvas = document.getElementById('documentCanvas');
+            if (!documentCanvas) return;
             const bgColor = document.getElementById('bgColor').value;
             const primaryColor = document.getElementById('primaryColor').value;
-            
+
             documentCanvas.style.background = bgColor;
             document.documentElement.style.setProperty('--primary', primaryColor);
+
+            currentTemplate.settings.bgColor = bgColor;
+            currentTemplate.settings.primaryColor = primaryColor;
         }
 
         // إجراءات القالب
         function goBack() {
             if (confirm('هل أنت متأكد؟ قد تفقد التغييرات غير المحفوظة.')) {
-                window.location.href = '/dashboard';
+                redirectToReturnPage();
             }
         }
 
@@ -1649,20 +1808,97 @@
 
         function saveAsDraft() {
             showLoading();
-            // حفظ القالب كمسودة
             setTimeout(() => {
+                const template = persistTemplate('draft');
                 hideLoading();
-                showNotification('تم حفظ القالب كمسودة بنجاح', 'success');
-            }, 1500);
+                if (template) {
+                    showNotification(`تم حفظ "${template.title}" كمسودة`, 'success');
+                }
+            }, 800);
         }
 
         function publishTemplate() {
             showLoading();
-            // نشر القالب
             setTimeout(() => {
+                const template = persistTemplate('published');
                 hideLoading();
-                showNotification('تم نشر القالب بنجاح', 'success');
-            }, 1500);
+                if (template) {
+                    showNotification(`تم نشر "${template.title}" بنجاح`, 'success');
+                    setTimeout(() => redirectToReturnPage(), 800);
+                }
+            }, 800);
+        }
+
+        function persistTemplate(status = 'draft') {
+            const canvas = document.getElementById('documentCanvas');
+            if (!canvas) return null;
+
+            const templateNameInput = document.getElementById('templateName');
+            const categorySelect = document.getElementById('templateCategory');
+
+            const templateTitle = templateNameInput ? (templateNameInput.value.trim() || 'قالب بدون اسم') : 'قالب بدون اسم';
+            const templateCategory = categorySelect ? categorySelect.value : 'quotation';
+
+            currentTemplate.name = templateTitle;
+            currentTemplate.category = templateCategory;
+            currentTemplate.id = currentTemplate.id || `custom-${Date.now()}`;
+
+            const now = new Date();
+            const templateData = {
+                id: currentTemplate.id,
+                title: templateTitle,
+                category: templateCategory,
+                status,
+                description: `آخر تحديث: ${formatArDateTime(now)}`,
+                updatedAt: now.toISOString(),
+                html: canvas.innerHTML,
+                settings: {
+                    bgColor: currentTemplate.settings.bgColor,
+                    primaryColor: currentTemplate.settings.primaryColor
+                }
+            };
+
+            const templates = loadSavedTemplates();
+            const existingIndex = templates.findIndex(template => template.id === templateData.id);
+            if (existingIndex > -1) {
+                templates[existingIndex] = templateData;
+            } else {
+                templates.push(templateData);
+            }
+
+            if (typeof localStorage === 'undefined') {
+                showNotification('التخزين المحلي غير متاح في هذا المتصفح', 'error');
+                return null;
+            }
+
+            try {
+                localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+            } catch (error) {
+                console.error('فشل حفظ القالب:', error);
+                showNotification('تعذر حفظ القالب في التخزين المحلي', 'error');
+                return null;
+            }
+
+            return templateData;
+        }
+
+        function formatArDateTime(date) {
+            try {
+                return new Intl.DateTimeFormat('ar-SA', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                }).format(date);
+            } catch (error) {
+                return date.toLocaleString('ar-SA');
+            }
+        }
+
+        function redirectToReturnPage() {
+            if (returnPage && returnPage !== 'dashboard') {
+                window.location.href = `index.html?page=${returnPage}`;
+            } else {
+                window.location.href = 'index.html';
+            }
         }
 
         function uploadLogo() {
