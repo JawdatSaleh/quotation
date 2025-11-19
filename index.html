@@ -2229,8 +2229,15 @@
         let appConfig = {};
         let pageContentElement = null;
         let previewTemplateState = null;
+        let activePage = 'dashboard';
         const pageTemplates = {};
         const CUSTOM_TEMPLATE_STORAGE_KEY = 'customTemplates';
+        const DEMO_TOKEN_PREFIX = 'demo-token-';
+        const templateState = {
+            cache: [],
+            syncing: false,
+            lastSync: 0
+        };
 
         const templateCatalog = [
             {
@@ -2289,18 +2296,7 @@
             }
         ];
 
-        function escapeAttribute(value) {
-            if (typeof value !== 'string') {
-                return value ? String(value) : '';
-            }
-            return value
-                .replace(/&/g, '&amp;')
-                .replace(/"/g, '&quot;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-        }
-
-        function getCustomTemplates() {
+        function loadTemplatesFromLocalStorage() {
             if (typeof localStorage === 'undefined') {
                 return [];
             }
@@ -2313,18 +2309,144 @@
             }
         }
 
+        function saveTemplatesToLocalStorage(templates) {
+            if (typeof localStorage === 'undefined') {
+                return;
+            }
+            try {
+                localStorage.setItem(CUSTOM_TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+            } catch (error) {
+                console.warn('تعذر تحديث القوالب المخصصة:', error);
+            }
+        }
+
+        function getAuthToken() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token || token.startsWith(DEMO_TOKEN_PREFIX)) {
+                    return null;
+                }
+                return token;
+            } catch (error) {
+                console.warn('تعذر قراءة التوكن:', error);
+                return null;
+            }
+        }
+
+        function canUseServerApis() {
+            return Boolean(getAuthToken());
+        }
+
+        function getCustomTemplates() {
+            if (!templateState.cache.length) {
+                templateState.cache = loadTemplatesFromLocalStorage();
+            }
+            return templateState.cache;
+        }
+
+        function formatTemplateUpdatedAt(dateInput) {
+            try {
+                const normalized = dateInput ? new Date(dateInput) : new Date();
+                return new Intl.DateTimeFormat('ar-SA', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                }).format(normalized);
+            } catch (error) {
+                try {
+                    return new Date(dateInput).toLocaleString('ar-SA');
+                } catch (fallbackError) {
+                    console.warn('تعذر تنسيق التاريخ:', fallbackError);
+                    return '';
+                }
+            }
+        }
+
+        function normalizeServerTemplate(template) {
+            if (!template) {
+                return null;
+            }
+            const id = template._id || template.id;
+            return {
+                id,
+                title: template.name || template.title || 'قالب بدون اسم',
+                category: template.type || template.category || 'quotation',
+                status: template.status || 'draft',
+                description: template.description || (template.updatedAt ? `آخر تحديث: ${formatTemplateUpdatedAt(template.updatedAt)}` : 'قالب محفوظ على الخادم'),
+                updatedAt: template.updatedAt || new Date().toISOString(),
+                html: template.html || '',
+                tags: Array.isArray(template.tags) ? template.tags : [],
+                source: 'server'
+            };
+        }
+
+        async function syncCustomTemplatesFromServer(force = false) {
+            if (!canUseServerApis()) {
+                templateState.cache = loadTemplatesFromLocalStorage();
+                return templateState.cache;
+            }
+
+            if (templateState.syncing) {
+                return templateState.cache;
+            }
+
+            if (!force && templateState.lastSync && (Date.now() - templateState.lastSync < 60000)) {
+                return templateState.cache;
+            }
+
+            templateState.syncing = true;
+            try {
+                const token = getAuthToken();
+                const response = await fetch('/api/templates?limit=100', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch templates');
+                }
+                const data = await response.json();
+                const normalized = (data.templates || [])
+                    .map(normalizeServerTemplate)
+                    .filter(Boolean);
+                templateState.cache = normalized;
+                templateState.lastSync = Date.now();
+                saveTemplatesToLocalStorage(normalized);
+                if (activePage === 'templates') {
+                    renderPage('templates');
+                }
+                return normalized;
+            } catch (error) {
+                console.warn('تعذر مزامنة القوالب مع الخادم:', error);
+                return templateState.cache;
+            } finally {
+                templateState.syncing = false;
+            }
+        }
+
+        function escapeAttribute(value) {
+            if (typeof value !== 'string') {
+                return value ? String(value) : '';
+            }
+            return value
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
         function buildTemplateCard(template, { source = 'default' } = {}) {
             const displayTitle = template.title || 'قالب بدون اسم';
             const safeTitle = displayTitle.replace(/'/g, "\\'");
             const dataTitle = escapeAttribute(displayTitle);
             const category = template.category || 'quotation';
-            const description = template.description || (source === 'custom' ? 'قالب مخصص تم إنشاؤه من خلال منشئ القوالب' : 'قالب جاهز للاستخدام.');
+            const isUserTemplate = source === 'custom' || source === 'server';
+            const description = template.description || (isUserTemplate ? 'قالب مخصص تم إنشاؤه من خلال منشئ القوالب' : 'قالب جاهز للاستخدام.');
             const tagsList = Array.isArray(template.tags) && template.tags.length
                 ? template.tags
-                : (source === 'custom' ? ['قالب مخصص', template.status === 'published' ? 'منشور' : 'مسودة'] : []);
-            const badgeLabel = template.badge || (source === 'custom' ? (template.status === 'published' ? 'منشور' : 'مسودة') : 'جاهز');
-            const badgeType = template.badgeType || (source === 'custom' ? (template.status === 'published' ? 'success' : 'pending') : 'info');
-            const builderLabel = source === 'custom' ? 'تعديل القالب' : 'تخصيص القالب';
+                : (isUserTemplate ? ['قالب مخصص', template.status === 'published' ? 'منشور' : 'مسودة'] : []);
+            const badgeLabel = template.badge || (isUserTemplate ? (template.status === 'published' ? 'منشور' : 'مسودة') : 'جاهز');
+            const badgeType = template.badgeType || (isUserTemplate ? (template.status === 'published' ? 'success' : 'pending') : 'info');
+            const builderLabel = isUserTemplate ? 'تعديل القالب' : 'تخصيص القالب';
             const templateIdAttr = template.id || `template-${Date.now()}`;
             const tagsMarkup = tagsList.map(tag => `<span>${tag}</span>`).join('');
 
@@ -2353,7 +2475,7 @@
                             معاينة
                         </button>
                         <button type="button" class="btn btn-primary"
-                            onclick="createDocumentFromTemplate('${category}', '${safeTitle}')">
+                            onclick="createDocumentFromTemplate('${category}', '${safeTitle}', '${escapeAttribute(templateIdAttr)}', '${source}')">
                             <i class="fas fa-magic"></i>
                             استخدام القالب
                         </button>
@@ -2363,7 +2485,7 @@
                             data-template-category="${category}"
                             data-template-title="${dataTitle}"
                             data-template-source="${source}"
-                            data-template-mode="${source === 'custom' ? 'edit' : 'create'}">
+                            data-template-mode="${isUserTemplate ? 'edit' : 'create'}">
                             <i class="fas fa-pen"></i>
                             ${builderLabel}
                         </button>
@@ -2428,6 +2550,12 @@
         }
 
         function navigateToPage(pageName) {
+            if (pageName && pageName.startsWith('create-')) {
+                const docType = pageName.replace('create-', '') || 'quotation';
+                openDocumentWorkspace(docType);
+                return;
+            }
+            activePage = pageName || 'dashboard';
             updateUrlForPage(pageName);
             setActiveNavByPage(pageName);
             renderPage(pageName);
@@ -2748,7 +2876,7 @@
                 return;
             }
 
-            if (token.startsWith('demo-token-') && storedUserRaw) {
+            if (token.startsWith(DEMO_TOKEN_PREFIX) && storedUserRaw) {
                 try {
                     const storedUser = JSON.parse(storedUserRaw);
                     currentUser = normalizeUser(storedUser);
@@ -2837,7 +2965,7 @@
                 ? 'تم تسجيل الدخول في الوضع التجريبي لعدم توفر الخادم حالياً.'
                 : 'تم تسجيل الدخول في الوضع التجريبي بسبب مشكلة في الاتصال.';
 
-            finalizeLoginSession(demoUser, `demo-token-${Date.now()}`, reasonMessage, 'info');
+            finalizeLoginSession(demoUser, `${DEMO_TOKEN_PREFIX}${Date.now()}`, reasonMessage, 'info');
             return true;
         }
 
@@ -2851,6 +2979,7 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('dashboardScreen').classList.add('active');
             updateUserInfo();
+            syncCustomTemplatesFromServer(true);
         }
 
         function showLogin() {
@@ -3078,6 +3207,10 @@
             }
             if (!pageContentElement) return;
 
+            if (pageKey) {
+                activePage = pageKey;
+            }
+
             let markup = '';
             if (pageKey === 'dashboard') {
                 markup = pageTemplates.dashboard || '';
@@ -3136,6 +3269,7 @@
         }
 
         function initializeTemplatesPage() {
+            syncCustomTemplatesFromServer(true);
             const filterButtons = document.querySelectorAll('[data-template-filter]');
             const cards = document.querySelectorAll('.template-card');
             const activateFilter = (filter) => {
@@ -3181,7 +3315,12 @@
                 applyButton.disabled = true;
                 applyButton.addEventListener('click', () => {
                     if (previewTemplateState) {
-                        createDocumentFromTemplate(previewTemplateState.category, previewTemplateState.title);
+                        createDocumentFromTemplate(
+                            previewTemplateState.category,
+                            previewTemplateState.title,
+                            previewTemplateState.id,
+                            previewTemplateState.source
+                        );
                         closeTemplatePreview();
                     }
                 });
@@ -3404,7 +3543,13 @@
         function buildTemplatesPage() {
             const customTemplates = getCustomTemplates();
             const builtInCards = templateCatalog.map(template => buildTemplateCard(template, { source: 'default' })).join('');
-            const customCards = customTemplates.map(template => buildTemplateCard(template, { source: 'custom' })).join('');
+            const customCards = customTemplates.map(template => buildTemplateCard(template, { source: template.source || 'custom' })).join('');
+            const syncingNotice = templateState.syncing
+                ? `<div style="padding: 12px 16px; margin-bottom: 16px; border-radius: 12px; background: rgba(14, 165, 233, 0.08); color: var(--text-secondary); display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                        <i class="fas fa-cloud-upload-alt" style="color: var(--primary-color);"></i>
+                        <span>جاري مزامنة القوالب المخصصة مع الخادم...</span>
+                    </div>`
+                : '';
             const customSection = customCards
                 ? `<div class="templates-grid">${customCards}</div>`
                 : `
@@ -3456,6 +3601,7 @@
                             </button>
                         </div>
                     </div>
+                    ${syncingNotice}
                     <div class="filter-group">
                         <button class="pill-button" data-template-filter="all">الكل</button>
                         <button class="pill-button" data-template-filter="quotation">عروض الأسعار</button>
@@ -4051,29 +4197,37 @@
 
         function createQuotation(event) {
             if (event) event.preventDefault();
-            navigateToPage('create-quotation');
+            openDocumentWorkspace('quotation');
         }
 
         function createInvoice(event) {
             if (event) event.preventDefault();
-            navigateToPage('create-invoice');
+            openDocumentWorkspace('invoice');
         }
 
         function createProposal(event) {
             if (event) event.preventDefault();
-            navigateToPage('create-proposal');
+            openDocumentWorkspace('proposal');
         }
 
-        function createDocumentFromTemplate(category, templateTitle) {
-            const handlers = {
-                quotation: createQuotation,
-                invoice: createInvoice,
-                proposal: createProposal,
-                contract: createProposal
-            };
-            const handler = handlers[category] || createQuotation;
-            handler();
-            showNotification(`تم تطبيق قالب ${templateTitle} على مستند جديد`, 'success');
+        function openDocumentWorkspace(docType = 'quotation', templateId = '', templateTitle = '', source = '') {
+            const params = new URLSearchParams();
+            params.set('type', docType || 'quotation');
+            if (templateTitle) {
+                params.set('title', templateTitle);
+            }
+            if (templateId) {
+                params.set('templateId', templateId);
+            }
+            if (source) {
+                params.set('source', source);
+            }
+            params.set('return', activePage || 'dashboard');
+            window.location.href = `document_workspace.html?${params.toString()}`;
+        }
+
+        function createDocumentFromTemplate(category, templateTitle, templateId = '', source = 'default') {
+            openDocumentWorkspace(category || 'quotation', templateId, templateTitle, source);
         }
 
         function showCompanySettings(event) {

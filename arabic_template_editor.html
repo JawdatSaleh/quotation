@@ -937,9 +937,12 @@
     <script>
         // إدارة الحالة
         const TEMPLATE_STORAGE_KEY = 'customTemplates';
+        const TEMPLATE_API_ENDPOINT = '/api/templates';
+        const DEMO_TOKEN_PREFIX = 'demo-token-';
         let draggedElement = null;
         let currentTemplate = {
             id: null,
+            serverId: null,
             source: 'custom',
             baseTemplateId: null,
             name: 'قالب عرض سعر البناء',
@@ -959,8 +962,8 @@
         let initialMessageDisplayed = false;
 
         // التهيئة
-        document.addEventListener('DOMContentLoaded', () => {
-            hydrateTemplateFromQuery();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await hydrateTemplateFromQuery();
             initializeDragDrop();
             initializeColorPickers();
             if (!initialMessageDisplayed) {
@@ -969,7 +972,109 @@
             }
         });
 
-        function hydrateTemplateFromQuery() {
+        function getAuthToken() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token || token.startsWith(DEMO_TOKEN_PREFIX)) {
+                    return null;
+                }
+                return token;
+            } catch (error) {
+                console.warn('Auth token unavailable:', error);
+                return null;
+            }
+        }
+
+        function canUseServerStorage() {
+            return Boolean(getAuthToken());
+        }
+
+        function getAuthorizedHeaders() {
+            const token = getAuthToken();
+            if (!token) {
+                return null;
+            }
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        async function fetchTemplateFromServer(templateId) {
+            const headers = getAuthorizedHeaders();
+            if (!headers) {
+                return null;
+            }
+            const response = await fetch(`${TEMPLATE_API_ENDPOINT}/${templateId}`, { headers });
+            if (!response.ok) {
+                throw new Error('Server template request failed');
+            }
+            const data = await response.json();
+            if (!data?.template) {
+                return null;
+            }
+            return normalizeServerTemplate(data.template);
+        }
+
+        async function saveTemplateToServer(payload) {
+            const headers = getAuthorizedHeaders();
+            if (!headers) {
+                return null;
+            }
+            const method = currentTemplate.serverId ? 'PUT' : 'POST';
+            const endpoint = currentTemplate.serverId
+                ? `${TEMPLATE_API_ENDPOINT}/${currentTemplate.serverId}`
+                : TEMPLATE_API_ENDPOINT;
+            const response = await fetch(endpoint, {
+                method,
+                headers,
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const errorPayload = await response.json().catch(() => ({}));
+                throw new Error(errorPayload?.error || 'Failed to save template');
+            }
+            const data = await response.json();
+            return data?.template ? normalizeServerTemplate(data.template) : null;
+        }
+
+        function normalizeServerTemplate(template) {
+            if (!template) return null;
+            const friendlyTitle = template.name || template.title || 'قالب بدون اسم';
+            return {
+                id: template._id || template.id,
+                title: friendlyTitle,
+                category: template.type || template.category || 'quotation',
+                status: template.status || 'draft',
+                description: template.description || (template.updatedAt ? `آخر تحديث: ${formatArDateTime(new Date(template.updatedAt))}` : 'قالب محفوظ على الخادم'),
+                updatedAt: template.updatedAt || new Date().toISOString(),
+                html: template.html || '',
+                settings: template.settings || {},
+                tags: Array.isArray(template.tags) ? template.tags : [],
+                source: 'server'
+            };
+        }
+
+        function updateLocalTemplateCache(templateData) {
+            const templates = loadSavedTemplates();
+            const existingIndex = templates.findIndex(template => template.id === templateData.id);
+            if (existingIndex > -1) {
+                templates[existingIndex] = templateData;
+            } else {
+                templates.push(templateData);
+            }
+
+            if (typeof localStorage === 'undefined') {
+                return;
+            }
+            try {
+                localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
+            } catch (error) {
+                console.warn('تعذر تحديث القوالب المخزنة محلياً:', error);
+            }
+        }
+
+        async function hydrateTemplateFromQuery() {
             const params = new URLSearchParams(window.location.search);
             returnPage = params.get('return') || 'templates';
             currentTemplate.source = params.get('source') || 'custom';
@@ -997,7 +1102,29 @@
                 currentTemplate.id = currentTemplate.id || `custom-${Date.now()}`;
             }
 
-            if (currentTemplate.source === 'custom' && currentTemplate.baseTemplateId) {
+            const shouldLoadFromServer = currentTemplate.source === 'server' && currentTemplate.baseTemplateId;
+            const shouldLoadFromLocal = currentTemplate.source === 'custom' && currentTemplate.baseTemplateId;
+
+            if (shouldLoadFromServer) {
+                try {
+                    showLoading();
+                    const savedTemplate = await fetchTemplateFromServer(currentTemplate.baseTemplateId);
+                    if (savedTemplate) {
+                        applyTemplateFromStorage(savedTemplate);
+                        currentTemplate.serverId = savedTemplate.id;
+                        initialMessageDisplayed = true;
+                        showNotification('تم تحميل القالب من الخادم للتعديل', 'success');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('فشل تحميل القالب من الخادم:', error);
+                    showNotification('تعذر تحميل القالب من الخادم، سيتم إنشاء قالب جديد', 'error');
+                } finally {
+                    hideLoading();
+                }
+            }
+
+            if (shouldLoadFromLocal) {
                 const savedTemplate = getTemplateFromStorage(currentTemplate.baseTemplateId);
                 if (savedTemplate) {
                     applyTemplateFromStorage(savedTemplate);
@@ -1037,12 +1164,15 @@
             canvas.innerHTML = template.html || canvas.innerHTML;
 
             currentTemplate.id = template.id;
-            currentTemplate.name = template.title || currentTemplate.name;
+            currentTemplate.serverId = template.source === 'server' ? template.id : null;
+            currentTemplate.name = template.title || template.name || currentTemplate.name;
             currentTemplate.category = template.category || currentTemplate.category;
+            currentTemplate.status = template.status || currentTemplate.status;
+            currentTemplate.tags = template.tags || currentTemplate.tags;
 
             const templateNameInput = document.getElementById('templateName');
-            if (templateNameInput && template.title) {
-                templateNameInput.value = template.title;
+            if (templateNameInput && (template.title || template.name)) {
+                templateNameInput.value = template.title || template.name;
             }
 
             const categorySelect = document.getElementById('templateCategory');
@@ -1806,30 +1936,32 @@
             `);
         }
 
-        function saveAsDraft() {
+        async function saveAsDraft() {
             showLoading();
-            setTimeout(() => {
-                const template = persistTemplate('draft');
-                hideLoading();
+            try {
+                const template = await persistTemplate('draft');
                 if (template) {
                     showNotification(`تم حفظ "${template.title}" كمسودة`, 'success');
                 }
-            }, 800);
+            } finally {
+                hideLoading();
+            }
         }
 
-        function publishTemplate() {
+        async function publishTemplate() {
             showLoading();
-            setTimeout(() => {
-                const template = persistTemplate('published');
-                hideLoading();
+            try {
+                const template = await persistTemplate('published');
                 if (template) {
                     showNotification(`تم نشر "${template.title}" بنجاح`, 'success');
                     setTimeout(() => redirectToReturnPage(), 800);
                 }
-            }, 800);
+            } finally {
+                hideLoading();
+            }
         }
 
-        function persistTemplate(status = 'draft') {
+        async function persistTemplate(status = 'draft') {
             const canvas = document.getElementById('documentCanvas');
             if (!canvas) return null;
 
@@ -1841,11 +1973,13 @@
 
             currentTemplate.name = templateTitle;
             currentTemplate.category = templateCategory;
-            currentTemplate.id = currentTemplate.id || `custom-${Date.now()}`;
+            currentTemplate.status = status;
+            currentTemplate.id = currentTemplate.serverId || currentTemplate.id || `custom-${Date.now()}`;
 
             const now = new Date();
+            const templateTags = Array.isArray(currentTemplate.tags) ? currentTemplate.tags : [];
             const templateData = {
-                id: currentTemplate.id,
+                id: currentTemplate.serverId || currentTemplate.id,
                 title: templateTitle,
                 category: templateCategory,
                 status,
@@ -1855,15 +1989,45 @@
                 settings: {
                     bgColor: currentTemplate.settings.bgColor,
                     primaryColor: currentTemplate.settings.primaryColor
-                }
+                },
+                tags: templateTags,
+                source: canUseServerStorage() ? 'server' : currentTemplate.source || 'custom'
             };
 
-            const templates = loadSavedTemplates();
-            const existingIndex = templates.findIndex(template => template.id === templateData.id);
-            if (existingIndex > -1) {
-                templates[existingIndex] = templateData;
-            } else {
-                templates.push(templateData);
+            const payload = {
+                name: templateTitle,
+                title: templateTitle,
+                type: templateCategory,
+                category: templateCategory,
+                status,
+                description: templateData.description,
+                html: templateData.html,
+                settings: currentTemplate.settings,
+                tags: templateTags,
+                isPublic: false
+            };
+
+            if (canUseServerStorage()) {
+                try {
+                    const savedTemplate = await saveTemplateToServer(payload);
+                    if (savedTemplate) {
+                        currentTemplate.serverId = savedTemplate.id;
+                        currentTemplate.id = savedTemplate.id;
+                        currentTemplate.source = 'server';
+                        templateData.id = savedTemplate.id;
+                        templateData.status = savedTemplate.status || status;
+                        templateData.description = savedTemplate.description || templateData.description;
+                        templateData.updatedAt = savedTemplate.updatedAt || templateData.updatedAt;
+                        templateData.html = savedTemplate.html || templateData.html;
+                        templateData.source = 'server';
+                        templateData.tags = savedTemplate.tags || templateData.tags;
+                        updateLocalTemplateCache(templateData);
+                        return templateData;
+                    }
+                } catch (error) {
+                    console.error('فشل حفظ القالب على الخادم:', error);
+                    showNotification('تعذر الحفظ على الخادم، سيتم استخدام التخزين المحلي مؤقتاً', 'error');
+                }
             }
 
             if (typeof localStorage === 'undefined') {
@@ -1871,29 +2035,42 @@
                 return null;
             }
 
-            try {
-                localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
-            } catch (error) {
-                console.error('فشل حفظ القالب:', error);
-                showNotification('تعذر حفظ القالب في التخزين المحلي', 'error');
-                return null;
-            }
-
+            templateData.source = templateData.source || 'custom';
+            currentTemplate.source = templateData.source;
+            updateLocalTemplateCache(templateData);
             return templateData;
         }
 
         function formatArDateTime(date) {
             try {
+                const normalized = date instanceof Date ? date : new Date(date);
                 return new Intl.DateTimeFormat('ar-SA', {
                     dateStyle: 'medium',
                     timeStyle: 'short'
-                }).format(date);
+                }).format(normalized);
             } catch (error) {
-                return date.toLocaleString('ar-SA');
+                try {
+                    return new Date(date).toLocaleString('ar-SA');
+                } catch (fallbackError) {
+                    console.warn('تعذر تنسيق التاريخ العربي:', fallbackError);
+                    return '';
+                }
             }
         }
 
         function redirectToReturnPage() {
+            if (returnPage === 'document-workspace') {
+                const params = new URLSearchParams();
+                params.set('type', currentTemplate.category || 'quotation');
+                if (currentTemplate.serverId || currentTemplate.id) {
+                    params.set('templateId', currentTemplate.serverId || currentTemplate.id);
+                }
+                params.set('source', currentTemplate.serverId ? 'server' : (currentTemplate.source || 'custom'));
+                params.set('title', currentTemplate.name || 'قالب مخصص');
+                window.location.href = `document_workspace.html?${params.toString()}`;
+                return;
+            }
+
             if (returnPage && returnPage !== 'dashboard') {
                 window.location.href = `index.html?page=${returnPage}`;
             } else {

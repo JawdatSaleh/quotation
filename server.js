@@ -55,6 +55,10 @@ app.get('/editor', (req, res) => {
     res.sendFile(path.join(__dirname, 'arabic_template_editor.html'));
 });
 
+app.get('/document-workspace', (req, res) => {
+    res.sendFile(path.join(__dirname, 'document_workspace.html'));
+});
+
 // Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -172,6 +176,8 @@ const templateSchema = new mongoose.Schema({
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     isPublic: { type: Boolean, default: false },
     thumbnail: String,
+    status: { type: String, enum: ['draft', 'published'], default: 'draft' },
+    html: { type: String, default: '' },
     sections: [{
         type: { type: String, required: true },
         position: Number,
@@ -204,6 +210,11 @@ const templateSchema = new mongoose.Schema({
     tags: [String],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
+});
+
+templateSchema.pre('save', function templatePreSave(next) {
+    this.updatedAt = new Date();
+    next();
 });
 
 // Document Schema
@@ -755,7 +766,16 @@ app.get('/api/templates/:id', authenticate, async (req, res) => {
 app.post('/api/templates', authenticate, async (req, res) => {
     try {
         const template = new Template({
-            ...req.body,
+            name: req.body.name || req.body.title || 'قالب بدون اسم',
+            description: req.body.description || '',
+            type: req.body.type || req.body.category || 'quotation',
+            status: req.body.status === 'published' ? 'published' : 'draft',
+            html: req.body.html || '',
+            settings: req.body.settings || {},
+            tags: Array.isArray(req.body.tags) ? req.body.tags : [],
+            sections: Array.isArray(req.body.sections) ? req.body.sections : [],
+            isPublic: typeof req.body.isPublic === 'boolean' ? req.body.isPublic : false,
+            thumbnail: req.body.thumbnail || '',
             owner: req.user.id
         });
 
@@ -782,8 +802,37 @@ app.put('/api/templates/:id', authenticate, async (req, res) => {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        Object.assign(template, req.body);
-        template.updatedAt = new Date();
+        if (req.body.name || req.body.title) {
+            template.name = req.body.name || req.body.title;
+        }
+        if (req.body.description !== undefined) {
+            template.description = req.body.description || '';
+        }
+        if (req.body.type || req.body.category) {
+            template.type = req.body.type || req.body.category;
+        }
+        if (req.body.status) {
+            template.status = req.body.status === 'published' ? 'published' : 'draft';
+        }
+        if (req.body.html !== undefined) {
+            template.html = req.body.html || '';
+        }
+        if (req.body.settings !== undefined) {
+            template.settings = req.body.settings || {};
+        }
+        if (req.body.tags !== undefined) {
+            template.tags = Array.isArray(req.body.tags) ? req.body.tags : [];
+        }
+        if (req.body.sections !== undefined) {
+            template.sections = Array.isArray(req.body.sections) ? req.body.sections : [];
+        }
+        if (req.body.isPublic !== undefined) {
+            template.isPublic = Boolean(req.body.isPublic);
+        }
+        if (req.body.thumbnail !== undefined) {
+            template.thumbnail = req.body.thumbnail || '';
+        }
+
         await template.save();
 
         res.json({ message: 'Template updated', template });
