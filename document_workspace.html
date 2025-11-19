@@ -183,12 +183,19 @@
             padding: 32px;
             min-height: calc(100vh - 240px);
             box-shadow: 0 15px 35px rgba(15, 23, 42, 0.06);
+            overflow: hidden;
         }
 
         #editorCanvas {
             min-height: 70vh;
             outline: none;
             line-height: 1.9;
+            max-width: 794px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
         }
 
         .doc-header {
@@ -211,6 +218,31 @@
             font-size: 14px;
         }
 
+        .doc-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .info-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            background: rgba(15, 23, 42, 0.02);
+        }
+
+        .info-card span {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .info-card strong {
+            font-size: 15px;
+        }
+
         .doc-section {
             margin-bottom: 24px;
         }
@@ -225,17 +257,68 @@
             font-size: 14px;
         }
 
+        .doc-table-wrapper {
+            overflow-x: auto;
+            border-radius: 14px;
+        }
+
         #editorCanvas table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 18px;
+            font-size: 14px;
         }
 
         #editorCanvas table th,
         #editorCanvas table td {
             border: 1px solid var(--border);
-            padding: 10px;
-            font-size: 14px;
+            padding: 12px 14px;
+        }
+
+        #editorCanvas table th {
+            font-weight: 700;
+        }
+
+        .quotation-table thead th {
+            background: linear-gradient(135deg, rgba(30,64,175,0.12), rgba(8,145,178,0.12));
+            color: var(--text);
+        }
+
+        .quotation-table tbody tr:nth-child(odd) {
+            background: rgba(15, 23, 42, 0.015);
+        }
+
+        .quotation-table tbody tr td:last-child,
+        .quotation-table thead th:last-child {
+            text-align: left;
+        }
+
+        .totals-box {
+            margin-top: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            max-width: 360px;
+            margin-left: auto;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .totals-row span:last-child {
+            color: var(--primary);
+        }
+
+        .doc-footer {
+            margin-top: 40px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--muted);
         }
 
         .toast {
@@ -266,6 +349,10 @@
             .side-panel {
                 position: static;
             }
+
+            #editorCanvas {
+                padding: 28px;
+            }
         }
 
         @media (max-width: 640px) {
@@ -287,6 +374,48 @@
                 flex: 1;
                 justify-content: center;
             }
+
+            #editorCanvas {
+                padding: 20px;
+            }
+        }
+
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        @media print {
+            body, html {
+                background: #fff;
+            }
+
+            .workspace-header,
+            .template-toolbar,
+            .side-panel,
+            .workspace-actions,
+            header,
+            aside,
+            .toast,
+            .document-layout::before {
+                display: none !important;
+            }
+
+            .document-layout,
+            .document-canvas,
+            #editorCanvas {
+                display: block;
+                box-shadow: none !important;
+                border: none !important;
+                max-width: 794px;
+                margin: 0 auto;
+                padding: 0;
+                background: #fff;
+            }
+
+            #editorCanvas {
+                padding: 10mm 0;
+            }
         }
     </style>
 </head>
@@ -304,6 +433,10 @@
             <button class="btn-soft" type="button" id="openBuilderButton">
                 <i class="fas fa-pen"></i>
                 تخصيص في منشئ القوالب
+            </button>
+            <button class="btn-soft" type="button" id="printPreviewButton">
+                <i class="fas fa-print"></i>
+                معاينة وطباعة A4
             </button>
             <button class="btn-primary" type="button" id="exportButton">
                 <i class="fas fa-file-export"></i>
@@ -339,8 +472,16 @@
                         <input type="text" id="documentTitleInput" name="documentTitle" data-meta-input placeholder="مثال: عرض سعر مشروع أبراج الرياض">
                     </div>
                     <div class="form-group">
+                        <label for="companyNameInput">اسم الشركة</label>
+                        <input type="text" id="companyNameInput" name="companyName" data-meta-input placeholder="شركة النور العالمية">
+                    </div>
+                    <div class="form-group">
                         <label for="clientNameInput">اسم العميل</label>
                         <input type="text" id="clientNameInput" name="clientName" data-meta-input placeholder="شركة البناء والتطوير">
+                    </div>
+                    <div class="form-group">
+                        <label for="quoteReferenceInput">رقم عرض السعر / المرجع</label>
+                        <input type="text" id="quoteReferenceInput" name="quoteReference" data-meta-input placeholder="QTN-2024-0015">
                     </div>
                     <div class="form-group">
                         <label for="documentDateInput">تاريخ الإصدار</label>
@@ -351,8 +492,28 @@
                         <input type="date" id="dueDateInput" name="dueDate" data-meta-input>
                     </div>
                     <div class="form-group">
+                        <label for="clientEmailInput">البريد الإلكتروني للعميل</label>
+                        <input type="email" id="clientEmailInput" name="clientEmail" data-meta-input placeholder="client@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="clientPhoneInput">رقم التواصل</label>
+                        <input type="tel" id="clientPhoneInput" name="clientPhone" data-meta-input placeholder="966500000000+">
+                    </div>
+                    <div class="form-group">
+                        <label for="clientAddressInput">عنوان العميل</label>
+                        <textarea id="clientAddressInput" name="clientAddress" data-meta-input rows="2" placeholder="الرياض - حي الياسمين - شارع العليا"></textarea>
+                    </div>
+                    <div class="form-group">
                         <label for="notesInput">ملاحظات أو شروط</label>
                         <textarea id="notesInput" name="notes" data-meta-input rows="4" placeholder="اكتب هنا أي شروط أو تفاصيل إضافية..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="additionalInfoInput">معلومات إضافية تظهر مع التوقيع</label>
+                        <textarea id="additionalInfoInput" name="additionalInfo" data-meta-input rows="3" placeholder="تفاصيل التسليم، الضمان، أو تعليمات الدفع"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="creationModeInput">طريقة الكتابة</label>
+                        <input type="text" id="creationModeInput" name="creationMode" data-meta-input readonly>
                     </div>
                 </form>
             </aside>
@@ -377,40 +538,97 @@
                     <div class="doc-header">
                         <div>
                             <h1>عرض سعر رسمي</h1>
-                            <p data-merge="documentTitle">عنوان العرض</p>
+                            <p data-merge="companyName">اسم الشركة</p>
                         </div>
                         <div class="doc-meta">
+                            <div><strong>رقم العرض:</strong> <span data-merge="quoteReference">—</span></div>
                             <div><strong>التاريخ:</strong> <span data-merge="documentDate">—</span></div>
-                            <div><strong>العميل:</strong> <span data-merge="clientName">—</span></div>
+                            <div><strong>صالح حتى:</strong> <span data-merge="dueDate">—</span></div>
                         </div>
+                    </div>
+                    <div class="doc-info-grid">
+                        <div class="info-card">
+                            <span>عنوان المشروع</span>
+                            <strong data-merge="documentTitle">—</strong>
+                        </div>
+                        <div class="info-card">
+                            <span>اسم العميل</span>
+                            <strong data-merge="clientName">—</strong>
+                        </div>
+                        <div class="info-card">
+                            <span>البريد الإلكتروني</span>
+                            <strong data-merge="clientEmail">—</strong>
+                        </div>
+                        <div class="info-card">
+                            <span>رقم الجوال</span>
+                            <strong data-merge="clientPhone">—</strong>
+                        </div>
+                    </div>
+                    <div class="info-card" style="margin-bottom: 24px;">
+                        <span>عنوان العميل</span>
+                        <strong data-merge="clientAddress">—</strong>
                     </div>
                     <div class="doc-section">
                         <h2>تفاصيل المشروع</h2>
                         <p contenteditable="true">اكتب وصفاً موجزاً للمشروع ومتطلباته الأساسية.</p>
                     </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>م</th>
-                                <th>الوصف</th>
-                                <th>الكمية</th>
-                                <th>سعر الوحدة</th>
-                                <th>الإجمالي</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td contenteditable="true">البند الأول</td>
-                                <td contenteditable="true">1</td>
-                                <td contenteditable="true">0.00</td>
-                                <td contenteditable="true">0.00</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="doc-section doc-table-wrapper">
+                        <table class="quotation-table">
+                            <thead>
+                                <tr>
+                                    <th>م</th>
+                                    <th>الوصف التفصيلي</th>
+                                    <th>الكمية</th>
+                                    <th>سعر الوحدة</th>
+                                    <th>الإجمالي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td contenteditable="true">تحليل المتطلبات ووضع خطة التنفيذ.</td>
+                                    <td contenteditable="true">1</td>
+                                    <td contenteditable="true">0.00</td>
+                                    <td contenteditable="true">0.00</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td contenteditable="true">التصميم والتطوير.</td>
+                                    <td contenteditable="true">1</td>
+                                    <td contenteditable="true">0.00</td>
+                                    <td contenteditable="true">0.00</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td contenteditable="true">الدعم والتسليم النهائي.</td>
+                                    <td contenteditable="true">1</td>
+                                    <td contenteditable="true">0.00</td>
+                                    <td contenteditable="true">0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="totals-box">
+                            <div class="totals-row">
+                                <span>المجموع الفرعي</span>
+                                <span contenteditable="true">0.00</span>
+                            </div>
+                            <div class="totals-row">
+                                <span>ضريبة القيمة المضافة (15%)</span>
+                                <span contenteditable="true">0.00</span>
+                            </div>
+                            <div class="totals-row" style="font-size: 18px;">
+                                <span>الإجمالي المستحق</span>
+                                <span contenteditable="true">0.00</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="doc-section">
                         <h2>الشروط والأحكام</h2>
                         <p data-merge="notes">سيتم إدراج الشروط هنا.</p>
+                    </div>
+                    <div class="doc-footer">
+                        <p><strong>الملاحظات الإضافية:</strong> <span data-merge="additionalInfo">—</span></p>
+                        <p><i class="fas fa-mobile-alt"></i> <span data-merge="creationMode">—</span></p>
                     </div>
                 `
             },
@@ -478,6 +696,7 @@
             const presetTitle = params.get('title');
 
             setupHeader();
+            detectCreationMode();
             const titleInput = document.getElementById('documentTitleInput');
             if (titleInput && presetTitle) {
                 titleInput.value = presetTitle;
@@ -689,11 +908,26 @@
                 <div class="doc-header">
                     <div>
                         <h1>${title}</h1>
-                        <p data-merge="documentTitle">عنوان المستند</p>
+                        <p data-merge="companyName">اسم الشركة</p>
                     </div>
                     <div class="doc-meta">
+                        <div><strong>رقم العرض:</strong> <span data-merge="quoteReference">—</span></div>
                         <div><strong>التاريخ:</strong> <span data-merge="documentDate">—</span></div>
                         <div><strong>العميل:</strong> <span data-merge="clientName">—</span></div>
+                    </div>
+                </div>
+                <div class="doc-info-grid">
+                    <div class="info-card">
+                        <span>عنوان المشروع</span>
+                        <strong data-merge="documentTitle">—</strong>
+                    </div>
+                    <div class="info-card">
+                        <span>البريد الإلكتروني</span>
+                        <strong data-merge="clientEmail">—</strong>
+                    </div>
+                    <div class="info-card">
+                        <span>رقم الجوال</span>
+                        <strong data-merge="clientPhone">—</strong>
                     </div>
                 </div>
                 <div class="doc-section">
@@ -706,6 +940,7 @@
             document.getElementById('saveDraftButton')?.addEventListener('click', () => handleSaveDocument('draft'));
             document.getElementById('sendButton')?.addEventListener('click', () => handleSaveDocument('final'));
             document.getElementById('exportButton')?.addEventListener('click', handleExport);
+            document.getElementById('printPreviewButton')?.addEventListener('click', handlePrintPreview);
             document.getElementById('openBuilderButton')?.addEventListener('click', openBuilderFromWorkspace);
             document.getElementById('backButton')?.addEventListener('click', () => {
                 if (returnPage && returnPage !== 'dashboard') {
@@ -731,7 +966,20 @@
             const canvas = document.getElementById('editorCanvas');
             if (!canvas) return;
             const meta = getDocumentMeta();
-            const bindings = ['documentTitle', 'clientName', 'documentDate', 'dueDate', 'notes'];
+            const bindings = [
+                'documentTitle',
+                'companyName',
+                'clientName',
+                'quoteReference',
+                'documentDate',
+                'dueDate',
+                'clientEmail',
+                'clientPhone',
+                'clientAddress',
+                'notes',
+                'additionalInfo',
+                'creationMode'
+            ];
             bindings.forEach(key => {
                 canvas.querySelectorAll(`[data-merge="${key}"]`).forEach(node => {
                     node.textContent = meta[key] || '—';
@@ -766,6 +1014,56 @@
             window.print();
         }
 
+        function handlePrintPreview() {
+            applyMetadataToCanvas();
+            const canvas = document.getElementById('editorCanvas');
+            if (!canvas) return;
+            const previewWindow = window.open('', '_blank', 'width=900,height=1200');
+            if (!previewWindow) {
+                showToast('تعذر فتح نافذة المعاينة. الرجاء السماح بالنوافذ المنبثقة.', 'warning');
+                return;
+            }
+            previewWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>معاينة عرض السعر</title>
+                    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+                    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+                    <style>
+                        body {
+                            font-family: 'Cairo', sans-serif;
+                            background: #f3f4f6;
+                            margin: 0;
+                            padding: 20px;
+                            direction: rtl;
+                        }
+                        .preview-wrapper {
+                            max-width: 794px;
+                            margin: 0 auto;
+                            background: #fff;
+                            padding: 25mm 20mm;
+                            box-shadow: 0 15px 30px rgba(15,23,42,0.1);
+                        }
+                        @page {
+                            size: A4;
+                            margin: 15mm;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="preview-wrapper">
+                        ${canvas.innerHTML}
+                    </div>
+                </body>
+                </html>
+            `);
+            previewWindow.document.close();
+            previewWindow.focus();
+            setTimeout(() => previewWindow.print(), 300);
+        }
+
         function openBuilderFromWorkspace() {
             const template = currentTemplate;
             const params = new URLSearchParams();
@@ -795,6 +1093,13 @@
             toast.innerHTML = `<i class="fas fa-info-circle"></i><span>${message}</span>`;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
+        }
+
+        function detectCreationMode() {
+            const input = document.getElementById('creationModeInput');
+            if (!input) return;
+            const isMobile = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent);
+            input.value = isMobile ? 'تم تحرير العرض من الجوال' : 'تم تحرير العرض من سطح المكتب';
         }
     </script>
 </body>
