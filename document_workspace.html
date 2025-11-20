@@ -190,12 +190,185 @@
             min-height: 70vh;
             outline: none;
             line-height: 1.9;
-            max-width: 794px;
+            max-width: 900px;
             margin: 0 auto;
+            padding: 32px;
+            background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+        }
+
+        .luxury-quote {
             background: #fff;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+            border-radius: 28px;
+            padding: 48px;
+            border: 1px solid rgba(15, 23, 42, 0.07);
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.09);
+            position: relative;
+            isolation: isolate;
+        }
+
+        .luxury-quote::after {
+            content: '';
+            position: absolute;
+            inset: 24px;
+            border-radius: 22px;
+            border: 1px dashed rgba(148, 163, 184, 0.4);
+            pointer-events: none;
+        }
+
+        .quote-hero {
+            display: flex;
+            justify-content: space-between;
+            gap: 32px;
+            padding-bottom: 28px;
+            border-bottom: 2px solid rgba(226, 232, 240, 0.7);
+            margin-bottom: 32px;
+        }
+
+        .quote-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--primary);
+        }
+
+        .quote-hero h1 {
+            margin: 8px 0 4px;
+            font-size: 34px;
+        }
+
+        .quote-hero p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .hero-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(140px, 1fr));
+            gap: 12px;
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.08), rgba(8, 145, 178, 0.08));
+            padding: 16px 18px;
+            border-radius: 18px;
+        }
+
+        .hero-meta div span {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .hero-meta div strong {
+            font-size: 16px;
+        }
+
+        .quote-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 32px;
+        }
+
+        .quote-card {
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            background: rgba(248, 250, 252, 0.75);
+        }
+
+        .quote-card span {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .quote-card strong {
+            font-size: 16px;
+        }
+
+        .quote-description {
+            padding: 22px;
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: #fffdf7;
+            margin-bottom: 28px;
+        }
+
+        .luxury-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
+            border-radius: 24px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+        }
+
+        .luxury-table thead th {
+            background: linear-gradient(135deg, rgba(30,64,175,0.9), rgba(14,165,233,0.75));
+            color: #fff;
+            padding: 16px 18px;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .luxury-table tbody td {
+            padding: 16px 18px;
+            border-top: 1px solid rgba(226, 232, 240, 0.8);
+            font-size: 15px;
+        }
+
+        .luxury-table tbody tr:nth-child(odd) td {
+            background: rgba(15, 23, 42, 0.015);
+        }
+
+        .luxury-table tbody td:first-child,
+        .luxury-table thead th:first-child {
+            text-align: center;
+            width: 60px;
+        }
+
+        .quote-summary {
+            margin-top: 24px;
+            border-radius: 22px;
+            padding: 24px;
+            background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent), #fff;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            max-width: 420px;
+            margin-left: auto;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .summary-row:last-child {
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        .quote-terms {
+            margin-top: 32px;
+            padding: 24px;
+            border-radius: 18px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            background: rgba(248, 250, 252, 0.7);
+        }
+
+        .quote-footer {
+            margin-top: 36px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 18px;
+            font-size: 14px;
+            color: var(--muted);
         }
 
         .doc-header {
@@ -353,6 +526,15 @@
             #editorCanvas {
                 padding: 28px;
             }
+
+            .quote-hero {
+                flex-direction: column;
+            }
+
+            .hero-meta {
+                width: 100%;
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
         }
 
         @media (max-width: 640px) {
@@ -377,6 +559,10 @@
 
             #editorCanvas {
                 padding: 20px;
+            }
+
+            .luxury-quote {
+                padding: 32px 24px;
             }
         }
 
@@ -414,7 +600,19 @@
             }
 
             #editorCanvas {
-                padding: 10mm 0;
+                padding: 0;
+                background: transparent;
+            }
+
+            .luxury-quote {
+                box-shadow: none;
+                border-radius: 0;
+                border: none;
+                padding: 0;
+            }
+
+            .luxury-quote::after {
+                display: none;
             }
         }
     </style>
@@ -531,100 +729,121 @@
         const DEFAULT_TEMPLATES = [
             {
                 id: 'quotation-classic',
-                title: 'عرض سعر كلاسيكي',
+                title: 'عرض سعر فاخر',
                 category: 'quotation',
                 source: 'default',
                 html: `
-                    <div class="doc-header">
-                        <div>
-                            <h1>عرض سعر رسمي</h1>
-                            <p data-merge="companyName">اسم الشركة</p>
-                        </div>
-                        <div class="doc-meta">
-                            <div><strong>رقم العرض:</strong> <span data-merge="quoteReference">—</span></div>
-                            <div><strong>التاريخ:</strong> <span data-merge="documentDate">—</span></div>
-                            <div><strong>صالح حتى:</strong> <span data-merge="dueDate">—</span></div>
-                        </div>
-                    </div>
-                    <div class="doc-info-grid">
-                        <div class="info-card">
-                            <span>عنوان المشروع</span>
-                            <strong data-merge="documentTitle">—</strong>
-                        </div>
-                        <div class="info-card">
-                            <span>اسم العميل</span>
-                            <strong data-merge="clientName">—</strong>
-                        </div>
-                        <div class="info-card">
-                            <span>البريد الإلكتروني</span>
-                            <strong data-merge="clientEmail">—</strong>
-                        </div>
-                        <div class="info-card">
-                            <span>رقم الجوال</span>
-                            <strong data-merge="clientPhone">—</strong>
-                        </div>
-                    </div>
-                    <div class="info-card" style="margin-bottom: 24px;">
-                        <span>عنوان العميل</span>
-                        <strong data-merge="clientAddress">—</strong>
-                    </div>
-                    <div class="doc-section">
-                        <h2>تفاصيل المشروع</h2>
-                        <p contenteditable="true">اكتب وصفاً موجزاً للمشروع ومتطلباته الأساسية.</p>
-                    </div>
-                    <div class="doc-section doc-table-wrapper">
-                        <table class="quotation-table">
-                            <thead>
-                                <tr>
-                                    <th>م</th>
-                                    <th>الوصف التفصيلي</th>
-                                    <th>الكمية</th>
-                                    <th>سعر الوحدة</th>
-                                    <th>الإجمالي</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td contenteditable="true">تحليل المتطلبات ووضع خطة التنفيذ.</td>
-                                    <td contenteditable="true">1</td>
-                                    <td contenteditable="true">0.00</td>
-                                    <td contenteditable="true">0.00</td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td contenteditable="true">التصميم والتطوير.</td>
-                                    <td contenteditable="true">1</td>
-                                    <td contenteditable="true">0.00</td>
-                                    <td contenteditable="true">0.00</td>
-                                </tr>
-                                <tr>
-                                    <td>3</td>
-                                    <td contenteditable="true">الدعم والتسليم النهائي.</td>
-                                    <td contenteditable="true">1</td>
-                                    <td contenteditable="true">0.00</td>
-                                    <td contenteditable="true">0.00</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="totals-box">
-                            <div class="totals-row">
-                                <span>المجموع الفرعي</span>
-                                <span contenteditable="true">0.00</span>
+                    <div class="luxury-quote">
+                        <div class="quote-hero">
+                            <div>
+                                <span class="quote-label"><i class="fas fa-gem"></i> عرض سعر رسمي</span>
+                                <h1 data-merge="documentTitle">عنوان المشروع</h1>
+                                <p data-merge="companyName">اسم الشركة</p>
                             </div>
-                            <div class="totals-row">
-                                <span>ضريبة القيمة المضافة (15%)</span>
-                                <span contenteditable="true">0.00</span>
-                            </div>
-                            <div class="totals-row" style="font-size: 18px;">
-                                <span>الإجمالي المستحق</span>
-                                <span contenteditable="true">0.00</span>
+                            <div class="hero-meta">
+                                <div>
+                                    <span>رقم العرض</span>
+                                    <strong data-merge="quoteReference">—</strong>
+                                </div>
+                                <div>
+                                    <span>تاريخ الإصدار</span>
+                                    <strong data-merge="documentDate">—</strong>
+                                </div>
+                                <div>
+                                    <span>صالح حتى</span>
+                                    <strong data-merge="dueDate">—</strong>
+                                </div>
+                                <div>
+                                    <span>اسم العميل</span>
+                                    <strong data-merge="clientName">—</strong>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="doc-section">
-                        <h2>الشروط والأحكام</h2>
-                        <p data-merge="notes">سيتم إدراج الشروط هنا.</p>
+                        <div class="quote-grid">
+                            <div class="quote-card">
+                                <span>البريد الإلكتروني</span>
+                                <strong data-merge="clientEmail">—</strong>
+                            </div>
+                            <div class="quote-card">
+                                <span>رقم الجوال</span>
+                                <strong data-merge="clientPhone">—</strong>
+                            </div>
+                            <div class="quote-card">
+                                <span>عنوان العميل</span>
+                                <strong data-merge="clientAddress">—</strong>
+                            </div>
+                            <div class="quote-card">
+                                <span>جهة الإصدار</span>
+                                <strong data-merge="companyName">—</strong>
+                            </div>
+                        </div>
+                        <div class="quote-description" contenteditable="true">
+                            نحن نضع بين أيديكم عرض سعر شامل لتنفيذ مشروعكم مع الحرص على أعلى معايير الجودة والالتزام الزمني.
+                        </div>
+                        <div class="doc-section doc-table-wrapper">
+                            <table class="luxury-table">
+                                <thead>
+                                    <tr>
+                                        <th>م</th>
+                                        <th>الوصف التفصيلي</th>
+                                        <th>الكمية</th>
+                                        <th>سعر الوحدة</th>
+                                        <th>الإجمالي</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td contenteditable="true">تحليل المتطلبات ووضع الخطة التنفيذية.</td>
+                                        <td contenteditable="true">1</td>
+                                        <td contenteditable="true">0.00</td>
+                                        <td contenteditable="true">0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td contenteditable="true">التصميم والإنتاج.</td>
+                                        <td contenteditable="true">1</td>
+                                        <td contenteditable="true">0.00</td>
+                                        <td contenteditable="true">0.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td contenteditable="true">التنفيذ والتسليم النهائي.</td>
+                                        <td contenteditable="true">1</td>
+                                        <td contenteditable="true">0.00</td>
+                                        <td contenteditable="true">0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="quote-summary">
+                                <div class="summary-row">
+                                    <span>المجموع الفرعي</span>
+                                    <span contenteditable="true">0.00</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>ضريبة القيمة المضافة (15%)</span>
+                                    <span contenteditable="true">0.00</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>الإجمالي المستحق</span>
+                                    <span contenteditable="true">0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="quote-terms">
+                            <h2>الشروط والأحكام</h2>
+                            <p data-merge="notes">يرجى مراجعة الشروط الخاصة بالدفع، مدة التنفيذ، وضمان جودة العمل.</p>
+                        </div>
+                        <div class="quote-footer">
+                            <div>
+                                <strong>الملاحظات الإضافية</strong>
+                                <p data-merge="additionalInfo">—</p>
+                            </div>
+                            <div>
+                                <strong>وسيلة التحرير</strong>
+                                <p data-merge="creationMode">—</p>
+                            </div>
+                        </div>
                     </div>
                     <div class="doc-footer">
                         <p><strong>الملاحظات الإضافية:</strong> <span data-merge="additionalInfo">—</span></p>
@@ -905,33 +1124,92 @@
 
         function buildFallbackTemplate(title = 'مستند مخصص') {
             return `
-                <div class="doc-header">
-                    <div>
-                        <h1>${title}</h1>
-                        <p data-merge="companyName">اسم الشركة</p>
+                <div class="luxury-quote">
+                    <div class="quote-hero">
+                        <div>
+                            <span class="quote-label"><i class="fas fa-gem"></i> ${title}</span>
+                            <h1 data-merge="documentTitle">—</h1>
+                            <p data-merge="companyName">اسم الشركة</p>
+                        </div>
+                        <div class="hero-meta">
+                            <div>
+                                <span>المرجع</span>
+                                <strong data-merge="quoteReference">—</strong>
+                            </div>
+                            <div>
+                                <span>التاريخ</span>
+                                <strong data-merge="documentDate">—</strong>
+                            </div>
+                            <div>
+                                <span>صالح حتى</span>
+                                <strong data-merge="dueDate">—</strong>
+                            </div>
+                            <div>
+                                <span>العميل</span>
+                                <strong data-merge="clientName">—</strong>
+                            </div>
+                        </div>
                     </div>
-                    <div class="doc-meta">
-                        <div><strong>رقم العرض:</strong> <span data-merge="quoteReference">—</span></div>
-                        <div><strong>التاريخ:</strong> <span data-merge="documentDate">—</span></div>
-                        <div><strong>العميل:</strong> <span data-merge="clientName">—</span></div>
+                    <div class="quote-grid">
+                        <div class="quote-card">
+                            <span>البريد الإلكتروني</span>
+                            <strong data-merge="clientEmail">—</strong>
+                        </div>
+                        <div class="quote-card">
+                            <span>رقم الجوال</span>
+                            <strong data-merge="clientPhone">—</strong>
+                        </div>
+                        <div class="quote-card">
+                            <span>عنوان العميل</span>
+                            <strong data-merge="clientAddress">—</strong>
+                        </div>
+                        <div class="quote-card">
+                            <span>ملاحظات</span>
+                            <strong data-merge="notes">—</strong>
+                        </div>
                     </div>
-                </div>
-                <div class="doc-info-grid">
-                    <div class="info-card">
-                        <span>عنوان المشروع</span>
-                        <strong data-merge="documentTitle">—</strong>
+                    <div class="quote-description" contenteditable="true">
+                        يمكنك البدء بالكتابة هنا لوصف المشروع أو عرض التفاصيل الرئيسية.
                     </div>
-                    <div class="info-card">
-                        <span>البريد الإلكتروني</span>
-                        <strong data-merge="clientEmail">—</strong>
+                    <div class="doc-section doc-table-wrapper">
+                        <table class="luxury-table">
+                            <thead>
+                                <tr>
+                                    <th>م</th>
+                                    <th>الوصف التفصيلي</th>
+                                    <th>الكمية</th>
+                                    <th>سعر الوحدة</th>
+                                    <th>الإجمالي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td contenteditable="true">البند الأول.</td>
+                                    <td contenteditable="true">1</td>
+                                    <td contenteditable="true">0.00</td>
+                                    <td contenteditable="true">0.00</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td contenteditable="true">البند الثاني.</td>
+                                    <td contenteditable="true">1</td>
+                                    <td contenteditable="true">0.00</td>
+                                    <td contenteditable="true">0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="info-card">
-                        <span>رقم الجوال</span>
-                        <strong data-merge="clientPhone">—</strong>
+                    <div class="quote-footer">
+                        <div>
+                            <strong>الملاحظات الإضافية</strong>
+                            <p data-merge="additionalInfo">—</p>
+                        </div>
+                        <div>
+                            <strong>وسيلة التحرير</strong>
+                            <p data-merge="creationMode">—</p>
+                        </div>
                     </div>
-                </div>
-                <div class="doc-section">
-                    <p contenteditable="true">ابدأ بالكتابة هنا...</p>
                 </div>
             `;
         }
