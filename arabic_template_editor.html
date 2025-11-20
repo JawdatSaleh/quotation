@@ -853,32 +853,32 @@
 
             <div class="property-group">
                 <label class="property-label">نوع الخط</label>
-                <select class="property-input">
-                    <option>Cairo</option>
-                    <option>Amiri</option>
-                    <option>Tajawal</option>
-                    <option>Almarai</option>
-                    <option>Noto Kufi Arabic</option>
+                <select class="property-input" id="fontFamily">
+                    <option value="Cairo">Cairo</option>
+                    <option value="Amiri">Amiri</option>
+                    <option value="Tajawal">Tajawal</option>
+                    <option value="Almarai">Almarai</option>
+                    <option value="Noto Kufi Arabic">Noto Kufi Arabic</option>
                 </select>
             </div>
 
             <div class="property-group">
                 <label class="property-label">حجم الخط</label>
-                <select class="property-input">
-                    <option>12px</option>
-                    <option selected>14px</option>
-                    <option>16px</option>
-                    <option>18px</option>
+                <select class="property-input" id="fontSize">
+                    <option value="12px">12px</option>
+                    <option value="14px" selected>14px</option>
+                    <option value="16px">16px</option>
+                    <option value="18px">18px</option>
                 </select>
             </div>
 
             <div class="property-group">
                 <label class="property-label">ارتفاع السطر</label>
-                <select class="property-input">
-                    <option>1.4</option>
-                    <option>1.6</option>
-                    <option selected>1.8</option>
-                    <option>2.0</option>
+                <select class="property-input" id="lineHeight">
+                    <option value="1.4">1.4</option>
+                    <option value="1.6">1.6</option>
+                    <option value="1.8" selected>1.8</option>
+                    <option value="2.0">2.0</option>
                 </select>
             </div>
 
@@ -886,42 +886,41 @@
 
             <div class="property-group">
                 <label class="property-label">حجم الصفحة</label>
-                <select class="property-input">
-                    <option selected>A4</option>
-                    <option>Letter</option>
-                    <option>Legal</option>
-                    <option>مخصص</option>
+                <select class="property-input" id="pageSize">
+                    <option value="A4">A4</option>
+                    <option value="Letter">Letter</option>
+                    <option value="Legal">Legal</option>
                 </select>
             </div>
 
             <div class="property-group">
                 <label class="property-label">اتجاه الصفحة</label>
-                <select class="property-input">
-                    <option selected>عمودي</option>
-                    <option>أفقي</option>
+                <select class="property-input" id="pageOrientation">
+                    <option value="عمودي">عمودي</option>
+                    <option value="أفقي">أفقي</option>
                 </select>
             </div>
 
             <div class="property-group">
                 <label class="property-label">الهوامش</label>
-                <input type="text" class="property-input" value="60px">
+                <input type="text" class="property-input" value="60px" id="pageMargin">
             </div>
 
             <div class="panel-title" style="margin-top: 35px;">الضريبة والعملة</div>
 
             <div class="property-group">
                 <label class="property-label">نسبة الضريبة</label>
-                <input type="number" class="property-input" value="15" min="0" max="100">
+                <input type="number" class="property-input" value="15" min="0" max="100" id="vatRate">
             </div>
 
             <div class="property-group">
                 <label class="property-label">العملة</label>
-                <select class="property-input">
-                    <option selected>ريال سعودي (SAR)</option>
-                    <option>دولار أمريكي (USD)</option>
-                    <option>يورو (EUR)</option>
-                    <option>درهم إماراتي (AED)</option>
-                    <option>جنيه مصري (EGP)</option>
+                <select class="property-input" id="currency">
+                    <option value="SAR">ريال سعودي (SAR)</option>
+                    <option value="USD">دولار أمريكي (USD)</option>
+                    <option value="EUR">يورو (EUR)</option>
+                    <option value="AED">درهم إماراتي (AED)</option>
+                    <option value="EGP">جنيه مصري (EGP)</option>
                 </select>
             </div>
         </div>
@@ -954,6 +953,9 @@
                 fontFamily: 'Cairo',
                 fontSize: '14px',
                 lineHeight: '1.8',
+                pageSize: 'A4',
+                pageOrientation: 'عمودي',
+                pageMargin: '60px',
                 vat: 15,
                 currency: 'SAR'
             }
@@ -966,6 +968,8 @@
             await hydrateTemplateFromQuery();
             initializeDragDrop();
             initializeColorPickers();
+            initializePropertyControls();
+            applyTemplateSettings();
             if (!initialMessageDisplayed) {
                 showNotification('مرحباً! ابدأ بسحب المكونات إلى اللوحة', 'info');
                 initialMessageDisplayed = true;
@@ -1185,6 +1189,7 @@
                     ...currentTemplate.settings,
                     ...template.settings
                 };
+                applyStoredSettingsToInputs(template.settings);
                 if (template.settings.bgColor) {
                     const bgColorInput = document.getElementById('bgColor');
                     if (bgColorInput) {
@@ -1322,6 +1327,10 @@
             updateDropZones();
             initializeEditors();
             showNotification('تم إضافة المكون بنجاح', 'success');
+
+            if (type === 'table') {
+                updateCalculations();
+            }
         }
 
         // قوالب المكونات
@@ -1822,13 +1831,14 @@
                 <td><button class="section-btn" onclick="deleteRow(this)"><i class="fas fa-times"></i></button></td>
             `;
             showNotification('تم إضافة بند جديد', 'success');
+            updateCalculations();
         }
 
         function deleteRow(btn) {
             const row = btn.closest('tr');
             row.remove();
             updateRowNumbers();
-            calculateTotals();
+            updateCalculations();
         }
 
         function calculateRow(input) {
@@ -1837,32 +1847,37 @@
             const price = parseFloat(row.cells[4].querySelector('input').value) || 0;
             const total = quantity * price;
             row.cells[5].querySelector('input').value = total.toFixed(2);
-            calculateTotals();
+            updateCalculations();
         }
 
-        function calculateTotals() {
+        function updateCalculations() {
             const table = document.querySelector('.pricing-table');
             if (!table) return;
-            
+
             let subtotal = 0;
             const rows = table.querySelectorAll('tbody tr');
-            
+
             rows.forEach(row => {
                 const totalCell = row.cells[5].querySelector('input');
                 if (totalCell) {
                     subtotal += parseFloat(totalCell.value) || 0;
                 }
             });
-            
-            const vat = subtotal * 0.15;
+
+            const vatRate = clampNumber(currentTemplate.settings.vat, 0, 100) / 100;
+            const vat = subtotal * vatRate;
             const total = subtotal + vat;
-            
+            const vatPercentLabel = (vatRate * 100).toFixed(0);
+
             const tfoot = table.querySelector('tfoot');
             if (tfoot) {
                 const footRows = tfoot.querySelectorAll('tr');
-                if (footRows[1]) footRows[1].cells[1].textContent = `${subtotal.toFixed(2)} ر.س`;
-                if (footRows[2]) footRows[2].cells[1].textContent = `${vat.toFixed(2)} ر.س`;
-                if (footRows[3]) footRows[3].cells[1].textContent = `${total.toFixed(2)} ر.س`;
+                if (footRows[1]) footRows[1].cells[1].textContent = formatCurrency(subtotal);
+                if (footRows[2]) {
+                    footRows[2].cells[0].textContent = `ضريبة القيمة المضافة (${vatPercentLabel}%):`;
+                    footRows[2].cells[1].textContent = formatCurrency(vat);
+                }
+                if (footRows[3]) footRows[3].cells[1].textContent = formatCurrency(total);
             }
         }
 
@@ -1895,17 +1910,166 @@
             });
         }
 
+        function initializePropertyControls() {
+            const fontFamilySelect = document.getElementById('fontFamily');
+            if (fontFamilySelect) {
+                fontFamilySelect.value = currentTemplate.settings.fontFamily;
+                fontFamilySelect.addEventListener('change', applyTemplateSettings);
+            }
+
+            const fontSizeSelect = document.getElementById('fontSize');
+            if (fontSizeSelect) {
+                fontSizeSelect.value = currentTemplate.settings.fontSize;
+                fontSizeSelect.addEventListener('change', applyTemplateSettings);
+            }
+
+            const lineHeightSelect = document.getElementById('lineHeight');
+            if (lineHeightSelect) {
+                lineHeightSelect.value = currentTemplate.settings.lineHeight;
+                lineHeightSelect.addEventListener('change', applyTemplateSettings);
+            }
+
+            const pageSizeSelect = document.getElementById('pageSize');
+            if (pageSizeSelect) {
+                pageSizeSelect.value = currentTemplate.settings.pageSize;
+                pageSizeSelect.addEventListener('change', applyTemplateSettings);
+            }
+
+            const pageOrientationSelect = document.getElementById('pageOrientation');
+            if (pageOrientationSelect) {
+                pageOrientationSelect.value = currentTemplate.settings.pageOrientation;
+                pageOrientationSelect.addEventListener('change', applyTemplateSettings);
+            }
+
+            const pageMarginInput = document.getElementById('pageMargin');
+            if (pageMarginInput) {
+                pageMarginInput.value = currentTemplate.settings.pageMargin;
+                pageMarginInput.addEventListener('change', applyTemplateSettings);
+            }
+
+            const vatInput = document.getElementById('vatRate');
+            if (vatInput) {
+                vatInput.value = currentTemplate.settings.vat;
+                vatInput.addEventListener('change', applyTemplateSettings);
+            }
+
+            const currencySelect = document.getElementById('currency');
+            if (currencySelect) {
+                currencySelect.value = currentTemplate.settings.currency;
+                currencySelect.addEventListener('change', applyTemplateSettings);
+            }
+        }
+
+        function applyStoredSettingsToInputs(settings) {
+            const handlers = [
+                { id: 'fontFamily', key: 'fontFamily' },
+                { id: 'fontSize', key: 'fontSize' },
+                { id: 'lineHeight', key: 'lineHeight' },
+                { id: 'pageSize', key: 'pageSize' },
+                { id: 'pageOrientation', key: 'pageOrientation' },
+                { id: 'pageMargin', key: 'pageMargin' },
+                { id: 'vatRate', key: 'vat' },
+                { id: 'currency', key: 'currency' }
+            ];
+
+            handlers.forEach(({ id, key }) => {
+                if (settings[key] !== undefined && settings[key] !== null) {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.value = settings[key];
+                    }
+                }
+            });
+        }
+
         function applyTemplateSettings() {
             const documentCanvas = document.getElementById('documentCanvas');
             if (!documentCanvas) return;
-            const bgColor = document.getElementById('bgColor').value;
-            const primaryColor = document.getElementById('primaryColor').value;
+            const bgColor = document.getElementById('bgColor')?.value || currentTemplate.settings.bgColor;
+            const primaryColor = document.getElementById('primaryColor')?.value || currentTemplate.settings.primaryColor;
+            const fontFamily = document.getElementById('fontFamily')?.value || currentTemplate.settings.fontFamily;
+            const fontSize = document.getElementById('fontSize')?.value || currentTemplate.settings.fontSize;
+            const lineHeight = document.getElementById('lineHeight')?.value || currentTemplate.settings.lineHeight;
+            const pageSize = document.getElementById('pageSize')?.value || currentTemplate.settings.pageSize;
+            const pageOrientation = document.getElementById('pageOrientation')?.value || currentTemplate.settings.pageOrientation;
+            const pageMargin = normalizeMarginValue(document.getElementById('pageMargin')?.value || currentTemplate.settings.pageMargin);
+            const vatRate = clampNumber(document.getElementById('vatRate')?.value ?? currentTemplate.settings.vat, 0, 100);
+            const currency = document.getElementById('currency')?.value || currentTemplate.settings.currency;
 
             documentCanvas.style.background = bgColor;
+            documentCanvas.style.fontFamily = fontFamily;
+            documentCanvas.style.fontSize = fontSize;
+            documentCanvas.style.lineHeight = lineHeight;
+            documentCanvas.style.padding = pageMargin;
+
+            const dimensions = getPageSizeDimensions(pageSize, pageOrientation);
+            documentCanvas.style.width = `${dimensions.width}px`;
+            documentCanvas.style.minHeight = `${dimensions.height}px`;
+
             document.documentElement.style.setProperty('--primary', primaryColor);
 
-            currentTemplate.settings.bgColor = bgColor;
-            currentTemplate.settings.primaryColor = primaryColor;
+            currentTemplate.settings = {
+                ...currentTemplate.settings,
+                bgColor,
+                primaryColor,
+                fontFamily,
+                fontSize,
+                lineHeight,
+                pageSize,
+                pageOrientation,
+                pageMargin,
+                vat: vatRate,
+                currency
+            };
+
+            const vatInput = document.getElementById('vatRate');
+            if (vatInput) {
+                vatInput.value = vatRate;
+            }
+
+            updateCalculations();
+        }
+
+        function normalizeMarginValue(value) {
+            const numeric = parseInt(value, 10);
+            if (Number.isNaN(numeric)) return currentTemplate.settings.pageMargin;
+            return `${numeric}px`;
+        }
+
+        function getPageSizeDimensions(size, orientation) {
+            const sizes = {
+                A4: { width: 794, height: 1123 },
+                Letter: { width: 816, height: 1056 },
+                Legal: { width: 816, height: 1344 }
+            };
+            const selected = sizes[size] || sizes.A4;
+            if (orientation === 'أفقي') {
+                return { width: selected.height, height: selected.width };
+            }
+            return selected;
+        }
+
+        function clampNumber(value, min, max) {
+            const numeric = parseFloat(value);
+            if (Number.isNaN(numeric)) return min;
+            return Math.min(Math.max(numeric, min), max);
+        }
+
+        function getCurrencySymbol(code) {
+            const symbols = {
+                SAR: 'ر.س',
+                USD: '$',
+                EUR: '€',
+                AED: 'د.إ',
+                EGP: 'ج.م'
+            };
+            return symbols[code] || code || 'ر.س';
+        }
+
+        function formatCurrency(value) {
+            const numericValue = parseFloat(value) || 0;
+            const symbol = getCurrencySymbol(currentTemplate.settings.currency);
+            return `${numericValue.toFixed(2)} ${symbol}`;
         }
 
         // إجراءات القالب
@@ -1986,10 +2150,7 @@
                 description: `آخر تحديث: ${formatArDateTime(now)}`,
                 updatedAt: now.toISOString(),
                 html: canvas.innerHTML,
-                settings: {
-                    bgColor: currentTemplate.settings.bgColor,
-                    primaryColor: currentTemplate.settings.primaryColor
-                },
+                settings: { ...currentTemplate.settings },
                 tags: templateTags,
                 source: canUseServerStorage() ? 'server' : currentTemplate.source || 'custom'
             };
